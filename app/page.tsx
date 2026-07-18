@@ -1,65 +1,120 @@
-import Image from "next/image";
+import { createClient } from "@/lib/supabase/server";
+import Link from "next/link";
+import { signOut } from "@/app/auth/actions"; // Import the action
 
-export default function Home() {
+export default async function HomePage() {
+  const supabase = await createClient();
+
+  // Check if a user is logged in
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="relative min-h-screen bg-black text-white selection:bg-white selection:text-black">
+      {/* 1. The Logged-in Suggestion Bar (Only shows if user is authenticated) */}
+      {user && (
+        <div className="absolute top-0 w-full bg-white/10 backdrop-blur-md border-b border-white/10 py-2 px-6 z-50 flex justify-between items-center animate-in fade-in slide-in-from-top duration-700">
+          <p className="text-xs font-medium tracking-tight opacity-80">
+            Logged in as <span className="font-bold">{user.email}</span>
           </p>
+          <div className="flex gap-6 items-center">
+            <Link
+              href="/admin"
+              className="text-xs font-bold uppercase tracking-widest hover:underline"
+            >
+              Dashboard
+            </Link>
+
+            {/* Logout Form */}
+            <form action={signOut}>
+              <button
+                type="submit"
+                className="text-xs font-bold uppercase tracking-widest opacity-60 hover:opacity-100 transition"
+              >
+                Logout
+              </button>
+            </form>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      )}
+
+      {/* 2. Hero Background Image */}
+      <div className="absolute inset-0 z-0">
+        <div className="absolute inset-0 bg-black/40 z-10" />{" "}
+        {/* Dark Overlay */}
+        <img
+          src="https://images.unsplash.com/photo-1492691523567-6170c3295db6?q=80&w=2070&auto=format&fit=crop"
+          alt="Photography Hero"
+          className="w-full h-full object-cover"
+        />
+      </div>
+
+      {/* 3. Navigation */}
+      <nav className="relative z-20 flex justify-between items-center p-8 md:px-16">
+        <h1 className="text-2xl font-serif italic tracking-tighter">
+          Lens & Light
+        </h1>
+        <div className="hidden md:flex gap-8 text-sm uppercase tracking-widest font-medium items-center">
+          <Link href="#portfolio" className="hover:opacity-50 transition">
+            Portfolio
+          </Link>
+
+          {/* If not logged in, show login. If logged in, show a quick link to the dashboard */}
+          {!user ? (
+            <Link
+              href="/login"
+              className="hover:opacity-50 transition border-b border-white/20 pb-1"
+            >
+              Client Login
+            </Link>
+          ) : (
+            <Link
+              href="/admin"
+              className="bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 rounded-full transition"
+            >
+              Dashboard
+            </Link>
+          )}
+        </div>
+      </nav>
+
+      {/* 4. Hero Content */}
+      <main className="relative z-20 flex flex-col items-center justify-center h-[80vh] text-center px-4">
+        <h2 className="text-5xl md:text-8xl font-serif mb-6 leading-tight animate-in fade-in zoom-in duration-1000">
+          Capturing the <br />
+          <span className="italic">Soul of the Moment</span>
+        </h2>
+
+        <p className="max-w-xl text-lg md:text-xl opacity-70 mb-10 font-light leading-relaxed">
+          Preserving your most cherished memories with timeless elegance.
+        </p>
+
+        <div className="flex flex-col md:flex-row gap-4">
+          {/* PRIMARY ACTION */}
+          <Link
+            href={user ? "/admin" : "/login"}
+            className="bg-white text-black px-10 py-4 rounded-full font-bold uppercase tracking-widest hover:bg-slate-200 transition active:scale-95"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            {user ? "View My Collections" : "Enter Client Gallery"}
+          </Link>
+
+          {/* SECONDARY ACTION: Only show if NOT logged in */}
+          {!user && (
+            <Link
+              href="/login"
+              className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-10 py-4 rounded-full font-bold uppercase tracking-widest hover:bg-white/20 transition active:scale-95"
+            >
+              Photographer Access
+            </Link>
+          )}
         </div>
       </main>
+
+      {/* 5. Scroll Indicator */}
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 animate-bounce opacity-50">
+        <div className="w-[1px] h-12 bg-white" />
+      </div>
     </div>
   );
 }
