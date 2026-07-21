@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Uploader from "@/components/Uploader";
 import Link from "next/link";
-import { Eye } from "lucide-react"; // Add this import
+import { Eye } from "lucide-react";
 
 export default async function GalleryDetailPage({
   params,
@@ -38,22 +38,26 @@ export default async function GalleryDetailPage({
         <span className="text-black font-medium">{gallery.title}</span>
       </nav>
 
-      {/* Header with Preview Button */}
-      <div className="flex justify-between items-end mb-8">
+      {/* Dynamic Responsive Header with Shadow Preview Button */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-8">
         <div>
-          <h1 className="text-4xl font-bold text-slate-900">{gallery.title}</h1>
-          <p className="text-slate-500 mt-1">Manage this collection</p>
+          <h1 className="text-4xl font-bold text-slate-900 tracking-tight">
+            {gallery.title}
+          </h1>
+          <p className="text-slate-500">
+            Collection ID: {gallery.id.slice(0, 8)}...
+          </p>
         </div>
 
-        {/* THE PREVIEW BUTTON */}
-        <Link
-          href={`/gallery/${gallery.id}`}
-          target="_blank"
-          className="flex items-center gap-2 bg-white border border-slate-200 text-slate-900 px-5 py-2.5 rounded-full text-sm font-bold hover:bg-slate-50 transition shadow-sm"
-        >
-          <Eye size={18} />
-          Preview as Client
-        </Link>
+        <div className="flex gap-3 w-full md:w-auto">
+          <Link
+            href={`/gallery/${gallery.id}`}
+            target="_blank"
+            className="flex-1 md:flex-none text-center bg-blue-600 text-white px-6 py-3 rounded-xl font-bold text-sm hover:bg-blue-700 transition shadow-lg shadow-blue-200"
+          >
+            Preview Client Gallery
+          </Link>
+        </div>
       </div>
 
       {/* Uploader Component */}

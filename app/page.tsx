@@ -1,120 +1,91 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-import { signOut } from "@/app/auth/actions"; // Import the action
 
 export default async function HomePage() {
   const supabase = await createClient();
 
-  // Check if a user is logged in
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Get public galleries to show as a "Teaser" on the front page
+  const { data: galleries } = await supabase
+    .from("galleries")
+    .select("*, photos(storage_path)")
+    .eq("is_public", true)
+    .limit(3);
 
   return (
-    <div className="relative min-h-screen bg-black text-white selection:bg-white selection:text-black">
-      {/* 1. The Logged-in Suggestion Bar (Only shows if user is authenticated) */}
-      {user && (
-        <div className="absolute top-0 w-full bg-white/10 backdrop-blur-md border-b border-white/10 py-2 px-6 z-50 flex justify-between items-center animate-in fade-in slide-in-from-top duration-700">
-          <p className="text-xs font-medium tracking-tight opacity-80">
-            Logged in as <span className="font-bold">{user.email}</span>
-          </p>
-          <div className="flex gap-6 items-center">
-            <Link
-              href="/admin"
-              className="text-xs font-bold uppercase tracking-widest hover:underline"
-            >
-              Dashboard
-            </Link>
-
-            {/* Logout Form */}
-            <form action={signOut}>
-              <button
-                type="submit"
-                className="text-xs font-bold uppercase tracking-widest opacity-60 hover:opacity-100 transition"
-              >
-                Logout
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* 2. Hero Background Image */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-black/40 z-10" />{" "}
-        {/* Dark Overlay */}
-        <img
-          src="https://images.unsplash.com/photo-1492691523567-6170c3295db6?q=80&w=2070&auto=format&fit=crop"
-          alt="Photography Hero"
-          className="w-full h-full object-cover"
-        />
-      </div>
-
-      {/* 3. Navigation */}
-      <nav className="relative z-20 flex justify-between items-center p-8 md:px-16">
-        <h1 className="text-2xl font-serif italic tracking-tighter">
+    <div className="min-h-screen bg-white text-black selection:bg-black selection:text-white">
+      {/* Simple, Clean Navbar */}
+      <nav className="p-6 md:p-10 flex justify-between items-center bg-white/80 backdrop-blur-md sticky top-0 z-50">
+        <h1 className="text-xl font-medium tracking-tighter uppercase">
           Lens & Light
         </h1>
-        <div className="hidden md:flex gap-8 text-sm uppercase tracking-widest font-medium items-center">
-          <Link href="#portfolio" className="hover:opacity-50 transition">
-            Portfolio
+        <div className="flex gap-6 text-[10px] uppercase tracking-widest font-bold">
+          <Link href="/login" className="hover:opacity-50 transition">
+            Client Access
           </Link>
-
-          {/* If not logged in, show login. If logged in, show a quick link to the dashboard */}
-          {!user ? (
-            <Link
-              href="/login"
-              className="hover:opacity-50 transition border-b border-white/20 pb-1"
-            >
-              Client Login
-            </Link>
-          ) : (
-            <Link
-              href="/admin"
-              className="bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-2 rounded-full transition"
-            >
-              Dashboard
-            </Link>
-          )}
         </div>
       </nav>
 
-      {/* 4. Hero Content */}
-      <main className="relative z-20 flex flex-col items-center justify-center h-[80vh] text-center px-4">
-        <h2 className="text-5xl md:text-8xl font-serif mb-6 leading-tight animate-in fade-in zoom-in duration-1000">
-          Capturing the <br />
-          <span className="italic">Soul of the Moment</span>
-        </h2>
+      {/* High-Impact Hero (Large but Simple) */}
+      <header className="px-6 py-10 md:px-20 md:py-20">
+        <div className="max-w-4xl">
+          <h2 className="text-4xl md:text-7xl font-serif italic leading-tight text-slate-900">
+            Preserving moments <br /> in their purest form.
+          </h2>
+          <p className="mt-6 text-slate-500 max-w-md leading-relaxed">
+            Professional photography for people who value timeless, unscripted
+            memories.
+          </p>
+        </div>
+      </header>
 
-        <p className="max-w-xl text-lg md:text-xl opacity-70 mb-10 font-light leading-relaxed">
-          Preserving your most cherished memories with timeless elegance.
-        </p>
+      {/* The Portfolio "Grid" - This is what he wants people to see immediately */}
+      <main className="px-4 md:px-10 pb-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {galleries?.map((gallery) => {
+            const coverPhoto = gallery.photos?.[0]?.storage_path;
+            const coverUrl = coverPhoto
+              ? supabase.storage.from("galleries").getPublicUrl(coverPhoto).data
+                  .publicUrl
+              : null;
 
-        <div className="flex flex-col md:flex-row gap-4">
-          {/* PRIMARY ACTION */}
-          <Link
-            href={user ? "/admin" : "/login"}
-            className="bg-white text-black px-10 py-4 rounded-full font-bold uppercase tracking-widest hover:bg-slate-200 transition active:scale-95"
-          >
-            {user ? "View My Collections" : "Enter Client Gallery"}
-          </Link>
-
-          {/* SECONDARY ACTION: Only show if NOT logged in */}
-          {!user && (
-            <Link
-              href="/login"
-              className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-10 py-4 rounded-full font-bold uppercase tracking-widest hover:bg-white/20 transition active:scale-95"
-            >
-              Photographer Access
-            </Link>
-          )}
+            return (
+              <Link
+                key={gallery.id}
+                href={`/gallery/${gallery.id}`}
+                className="group block"
+              >
+                <div className="aspect-[4/5] bg-slate-100 overflow-hidden rounded-sm relative">
+                  {coverUrl && (
+                    <img
+                      src={coverUrl}
+                      alt={gallery.title}
+                      className="w-full h-full object-cover transition duration-1000 group-hover:scale-105"
+                    />
+                  )}
+                  <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+                <div className="mt-4 flex justify-between items-end">
+                  <h3 className="text-sm font-medium uppercase tracking-widest">
+                    {gallery.title}
+                  </h3>
+                  <span className="text-[10px] text-slate-400">
+                    View Collection →
+                  </span>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </main>
 
-      {/* 5. Scroll Indicator */}
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 animate-bounce opacity-50">
-        <div className="w-[1px] h-12 bg-white" />
-      </div>
+      <footer className="p-10 text-center border-t border-slate-50">
+        <Link
+          href="/login"
+          className="text-[10px] uppercase tracking-widest text-slate-300 hover:text-black transition"
+        >
+          Photographer Login
+        </Link>
+      </footer>
     </div>
   );
 }
