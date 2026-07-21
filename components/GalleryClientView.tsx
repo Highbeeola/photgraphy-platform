@@ -1,35 +1,39 @@
 "use client";
+
 import { useState } from "react";
+import { X, Download, ZoomIn } from "lucide-react";
 import FavoriteButton from "@/components/FavoriteButton";
-import { X, Download } from "lucide-react";
 
-// 1. DEFINE TYPES (This fixes the 'any' errors)
-interface Photo {
-  id: string;
-  storage_path: string;
-  url: string;
-}
-
+// 1. ADD THESE INTERFACES (This is what Vercel is looking for)
 interface Gallery {
   id: string;
   title: string;
   event_date?: string;
 }
 
+interface Photo {
+  id: string;
+  url: string;
+  storage_path: string;
+}
+
 interface Favorite {
   photo_id: string;
 }
 
-export default function GalleryClientView({
+// 2. DEFINE THE PROPS CLEARLY
+export default function GalleryView({
   gallery,
   photos,
-  initialFavorites,
+  initialFavorites = [],
 }: {
   gallery: Gallery;
   photos: Photo[];
-  initialFavorites: Favorite[];
+  initialFavorites?: Favorite[];
 }) {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  // ... (rest of your component code below)
 
   const handleDownload = async (url: string) => {
     const res = await fetch(url);
