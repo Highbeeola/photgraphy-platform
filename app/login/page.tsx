@@ -24,7 +24,8 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({
+
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
@@ -33,12 +34,24 @@ export default function LoginPage() {
       toast.error(error.message);
       setLoading(false);
     } else {
+      // 1. Fetch the user's role from our public.users table
+      const { data: profile } = await supabase
+        .from("users")
+        .select("role")
+        .eq("id", data.user.id)
+        .single();
+
       toast.success("Welcome back!");
       router.refresh();
-      router.push("/admin");
+
+      // 2. Redirect based on role
+      if (profile?.role === "photographer") {
+        router.push("/admin");
+      } else {
+        router.push("/portal"); // This is the new Client Portal
+      }
     }
   };
-
   const handleGoogleLogin = async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
