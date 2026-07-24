@@ -45,3 +45,17 @@ export async function deleteGallery(id: string) {
   revalidatePath("/admin");
   return { success: true };
 }
+export async function assignGalleryToClient(
+  galleryId: string,
+  clientId: string,
+) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("galleries")
+    .update({ client_id: clientId })
+    .eq("id", galleryId);
+
+  if (error) return { error: error.message };
+  revalidatePath(`/admin/gallery/${galleryId}`);
+  return { success: true };
+}

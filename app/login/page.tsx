@@ -25,31 +25,39 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
 
-    const { data, error } = await supabase.auth.signInWithPassword({
+    // 1. Log in
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (error) {
-      toast.error(error.message);
+    if (authError) {
+      alert("Auth Error: " + authError.message);
       setLoading(false);
+      return;
+    }
+
+    // 2. FETCH AND LOG (Watch the alert closely)
+    const { data: profile, error: profileError } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", data.user.id)
+      .single();
+
+    if (profileError) {
+      // THIS ALERT WILL REVEAL THE TRUTH
+      alert(
+        "DATABASE ERROR: " + profileError.code + " - " + profileError.message,
+      );
+      window.location.href = "/portal";
+      return;
+    }
+
+    // 3. SUCCESS REDIRECT
+    if (profile.role === "photographer") {
+      window.location.assign("/admin");
     } else {
-      // 1. Fetch the user's role from our public.users table
-      const { data: profile } = await supabase
-        .from("users")
-        .select("role")
-        .eq("id", data.user.id)
-        .single();
-
-      toast.success("Welcome back!");
-      router.refresh();
-
-      // 2. Redirect based on role
-      if (profile?.role === "photographer") {
-        router.push("/admin");
-      } else {
-        router.push("/portal"); // This is the new Client Portal
-      }
+      window.location.assign("/portal");
     }
   };
   const handleGoogleLogin = async () => {

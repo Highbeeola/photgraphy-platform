@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Uploader from "@/components/Uploader";
 import Link from "next/link";
 import { Eye } from "lucide-react";
-
+import { assignGalleryToClient } from "@/app/admin/actions"; // Adjust path to match your folder structure
 export default async function GalleryDetailPage({
   params,
 }: {
@@ -26,6 +26,12 @@ export default async function GalleryDetailPage({
     .from("photos")
     .select("*")
     .eq("gallery_id", id); // Corrected filter
+
+  // 1. Fetch all clients to show in the dropdown
+  const { data: clients } = await supabase
+    .from("users")
+    .select("id, full_name, email")
+    .eq("role", "client");
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 p-4">
@@ -62,6 +68,43 @@ export default async function GalleryDetailPage({
 
       {/* Uploader Component */}
       <Uploader galleryId={gallery.id} />
+
+      {/* 2. Assign to Client Section */}
+      <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm mt-8">
+        <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">
+          Assign to Client
+        </h3>
+        <form
+          action={async (formData) => {
+            "use server";
+            const clientId = formData.get("clientId") as string;
+            await assignGalleryToClient(gallery.id, clientId);
+          }}
+          className="flex gap-4"
+        >
+          <select
+            name="clientId"
+            className="flex-1 p-3 border border-slate-200 rounded-xl bg-slate-50 outline-none"
+          >
+            <option value="">Select a Client...</option>
+            {clients?.map((c) => (
+              <option
+                key={c.id}
+                value={c.id}
+                selected={gallery.client_id === c.id}
+              >
+                {c.full_name || c.email}
+              </option>
+            ))}
+          </select>
+          <button
+            type="submit"
+            className="bg-black text-white px-6 py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-800 transition"
+          >
+            Save Assignment
+          </button>
+        </form>
+      </div>
 
       {/* Photo Grid Section */}
       <div className="mt-12">

@@ -53,7 +53,16 @@ export default function CreateGalleryForm() {
             className="w-full p-3 border border-slate-200 rounded-xl outline-none"
           />
         </div>
-
+        <div className="space-y-2">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">
+            Access PIN (Optional)
+          </label>
+          <input
+            name="password"
+            placeholder="e.g. 1234"
+            className="w-full p-3 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
         <button
           type="submit"
           disabled={isPending}

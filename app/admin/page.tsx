@@ -4,6 +4,7 @@ import CreateGalleryForm from "./CreateGalleryForm"; // Ensure this file exists 
 import { deleteGallery } from "./actions"; // Ensure 'actions.ts' exists in the same folder
 import { Trash2, Calendar, Image as ImageIcon } from "lucide-react";
 import Link from "next/link";
+import CopyLinkButton from "@/components/CopyLinkButton";
 
 export default async function AdminDashboard() {
   const supabase = await createClient();
@@ -16,8 +17,8 @@ export default async function AdminDashboard() {
   return (
     <div className="max-w-6xl mx-auto space-y-10 pb-20">
       {/* 
-         If you get an error on <CreateGalleryForm />, 
-         make sure the file is named 'CreateGalleryForm.tsx' (case sensitive) 
+          If you get an error on <CreateGalleryForm />, 
+          make sure the file is named 'CreateGalleryForm.tsx' (case sensitive) 
       */}
       <CreateGalleryForm />
 
@@ -36,7 +37,12 @@ export default async function AdminDashboard() {
 
             return (
               <div key={gallery.id} className="group relative">
-                {/* DELETE BUTTON */}
+                {/* --- NEW: THE COPY LINK BUTTON (TOP RIGHT) --- */}
+                <div className="absolute top-4 right-4 z-30 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                  <CopyLinkButton galleryId={gallery.id} />
+                </div>
+
+                {/* --- EXISTING: THE DELETE BUTTON (TOP LEFT) --- */}
                 <div className="absolute top-4 left-4 z-30 opacity-0 group-hover:opacity-100 transition-all duration-300">
                   <form
                     action={async () => {
