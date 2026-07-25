@@ -29,7 +29,7 @@ export default function CreateGalleryForm() {
       <form
         ref={formRef}
         action={handleSubmit}
-        className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end"
+        className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end"
       >
         <div className="md:col-span-2 space-y-2">
           <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">
@@ -63,6 +63,23 @@ export default function CreateGalleryForm() {
             placeholder="e.g. 1234"
             className="w-full p-3 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition"
           />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">
+            Category
+          </label>
+          <select
+            name="category"
+            className="w-full p-3 border border-slate-200 rounded-xl bg-white outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option>Wedding</option>
+            <option>Lifestyle</option>
+            <option>Birthday</option>
+            <option>Convocation</option>
+            <option>Baby</option>
+            <option>Bridal Shower</option>
+          </select>
         </div>
 
         <button

@@ -9,6 +9,7 @@ export async function createGallery(formData: FormData) {
   const eventDate = formData.get("eventDate") as string;
   const isPublic = formData.get("isPublic") === "on";
   const password = formData.get("password") as string;
+  const category = formData.get("category") as string;
 
   const {
     data: { user },
@@ -22,6 +23,7 @@ export async function createGallery(formData: FormData) {
       is_public: isPublic,
       photographer_id: user.id,
       password: password || null,
+      category: category || null,
     },
   ]);
 
@@ -98,14 +100,23 @@ export async function quickAddClient(fullName: string, email: string) {
 
 export async function updateGallerySettings(
   id: string,
-  settings: { password?: string; is_public?: boolean },
+  settings: { password?: string; is_public?: boolean; category?: string },
 ) {
   const supabase = await createClient();
+
+  // We explicitly list the allowed fields to update
   const { error } = await supabase
     .from("galleries")
     .update(settings)
     .eq("id", id);
-  if (error) return { error: error.message };
+
+  if (error) {
+    console.error("Update Error:", error);
+    return { error: error.message };
+  }
+
   revalidatePath(`/admin/gallery/${id}`);
+  revalidatePath("/admin");
+  revalidatePath("/portfolio");
   return { success: true };
 }

@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { X, Download, ZoomIn } from "lucide-react";
+import { useState, useEffect } from "react";
+import { X, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import FavoriteButton from "@/components/FavoriteButton";
 
-// 1. ADD THESE INTERFACES (This is what Vercel is looking for)
 interface Gallery {
   id: string;
   title: string;
@@ -21,7 +20,6 @@ interface Favorite {
   photo_id: string;
 }
 
-// 2. DEFINE THE PROPS CLEARLY
 export default function GalleryView({
   gallery,
   photos,
@@ -31,9 +29,36 @@ export default function GalleryView({
   photos: Photo[];
   initialFavorites?: Favorite[];
 }) {
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [currentIndex, setCurrentIndex] = useState<number | null>(null);
 
-  // ... (rest of your component code below)
+  const showNext = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    // STOP at the last photo
+    if (currentIndex !== null && currentIndex < photos.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+    }
+  };
+
+  const showPrev = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    // STOP at the first photo
+    if (currentIndex !== null && currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    }
+  };
+
+  // Keyboard navigation (Arrow keys + Escape)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (currentIndex === null) return;
+      if (e.key === "ArrowRight") showNext();
+      if (e.key === "ArrowLeft") showPrev();
+      if (e.key === "Escape") setCurrentIndex(null);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [currentIndex]);
 
   const handleDownload = async (url: string) => {
     const res = await fetch(url);
@@ -41,7 +66,7 @@ export default function GalleryView({
     const blobUrl = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = blobUrl;
-    a.download = `${gallery.title.replace(/\s+/g, "-")}.jpg`;
+    a.download = `${gallery.title.replace(/\s+/g, "-")}-${(currentIndex ?? 0) + 1}.jpg`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -60,7 +85,7 @@ export default function GalleryView({
 
       <main className="max-w-[1600px] mx-auto px-2 md:px-4 pb-20">
         <div className="columns-2 md:columns-3 lg:columns-4 gap-2 md:gap-4 space-y-2 md:space-y-4">
-          {photos.map((photo) => (
+          {photos.map((photo, index) => (
             <div
               key={photo.id}
               className="relative group break-inside-avoid rounded-sm overflow-hidden bg-slate-50"
@@ -68,8 +93,9 @@ export default function GalleryView({
               <img
                 src={photo.url}
                 className="w-full h-auto cursor-zoom-in hover:opacity-90 transition duration-500"
-                onClick={() => setSelectedImage(photo.url)}
+                onClick={() => setCurrentIndex(index)}
                 loading="lazy"
+                alt=""
               />
               <div className="absolute top-2 right-2 md:opacity-0 group-hover:opacity-100 transition-opacity">
                 <FavoriteButton
@@ -85,24 +111,65 @@ export default function GalleryView({
         </div>
       </main>
 
-      {selectedImage && (
-        <div className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300">
+      {/* Lightbox Modal */}
+      {currentIndex !== null && (
+        <div
+          onClick={() => setCurrentIndex(null)}
+          className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300 select-none"
+        >
+          {/* Close Button */}
           <button
-            onClick={() => setSelectedImage(null)}
-            className="absolute top-6 right-6 text-white/50 hover:text-white transition"
+            onClick={() => setCurrentIndex(null)}
+            className="absolute top-6 right-6 text-white/50 hover:text-white transition z-10"
           >
             <X size={32} />
           </button>
-          <img
-            src={selectedImage}
-            className="max-w-full max-h-[80vh] object-contain shadow-2xl"
-          />
-          <button
-            onClick={() => handleDownload(selectedImage)}
-            className="mt-8 bg-white text-black px-10 py-4 rounded-full font-bold text-xs uppercase tracking-widest flex gap-2 items-center hover:bg-slate-200 transition"
+
+          {/* Only show PREV if we aren't at the start */}
+          {currentIndex > 0 && (
+            <button
+              onClick={showPrev}
+              className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition p-2 z-10 hover:scale-110"
+              aria-label="Previous photo"
+            >
+              <ChevronLeft size={44} />
+            </button>
+          )}
+
+          {/* Current Photo */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="flex flex-col items-center max-w-full max-h-[85vh]"
           >
-            <Download size={16} /> Download High Res
-          </button>
+            <img
+              src={photos[currentIndex].url}
+              className="max-w-full max-h-[75vh] object-contain shadow-2xl rounded-sm"
+              alt=""
+            />
+
+            <button
+              onClick={() => handleDownload(photos[currentIndex].url)}
+              className="mt-6 bg-white text-black px-8 py-3 rounded-full font-bold text-xs uppercase tracking-widest flex gap-2 items-center hover:bg-slate-200 transition active:scale-95"
+            >
+              <Download size={16} /> Download High Res
+            </button>
+          </div>
+
+          {/* Only show NEXT if we aren't at the end */}
+          {currentIndex < photos.length - 1 && (
+            <button
+              onClick={showNext}
+              className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition p-2 z-10 hover:scale-110"
+              aria-label="Next photo"
+            >
+              <ChevronRight size={44} />
+            </button>
+          )}
+
+          {/* Counter Indicator */}
+          <div className="absolute bottom-6 text-white/40 text-xs font-mono tracking-widest">
+            {currentIndex + 1} / {photos.length}
+          </div>
         </div>
       )}
     </div>

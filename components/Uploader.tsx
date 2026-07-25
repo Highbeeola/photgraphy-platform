@@ -18,19 +18,40 @@ export default function Uploader({ galleryId }: { galleryId: string }) {
       if (!files || files.length === 0) return;
 
       for (const file of Array.from(files)) {
+        // Delay between uploads to give mobile connections breathing room
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
         // 1. Create a unique path
         const fileExt = file.name.split(".").pop();
         const fileName = `${Math.random()}.${fileExt}`;
         const filePath = `${galleryId}/${fileName}`;
 
-        // 2. Upload with explicit content type and upsert
-        const { error: uploadError } = await supabase.storage
-          .from("galleries") // MUST MATCH BUCKET NAME EXACTLY
-          .upload(filePath, file, {
-            cacheControl: "3600",
-            upsert: true, // This prevents 400 errors on duplicate attempts
-            contentType: file.type, // Explicitly set the mime type (image/png, etc)
-          });
+        const uploadOptions = {
+          cacheControl: "3600",
+          upsert: false, // Prevents accidental overwrites
+          contentType: file.type,
+        };
+
+        // 2. Upload with 1-time retry on failure
+        let { error: uploadError } = await supabase.storage
+          .from("galleries")
+          .upload(filePath, file, uploadOptions);
+
+        if (uploadError) {
+          console.warn(
+            "Upload failed, attempting 1-time retry...",
+            uploadError,
+          );
+
+          // Wait 1 second before retrying
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          const retryResult = await supabase.storage
+            .from("galleries")
+            .upload(filePath, file, uploadOptions);
+
+          uploadError = retryResult.error;
+        }
 
         if (uploadError) {
           console.error("Storage Error Detail:", uploadError);
@@ -49,25 +70,26 @@ export default function Uploader({ galleryId }: { galleryId: string }) {
       toast.success("Upload complete!");
       router.refresh();
     } catch (error: any) {
-      // Log the full error to see exactly what Supabase is complaining about
-      console.log("Full Error Object:", error);
+      console.error("Full Error Object:", error);
       toast.error(`Upload failed: ${error.message || "Check console"}`);
     } finally {
       setUploading(false);
+      // Reset input value so re-selecting the same file works as expected
+      e.target.value = "";
     }
   };
 
   return (
     <div className="relative group">
-      {/* Make the label the trigger. Labels work 100% on mobile. */}
+      {/* Label trigger */}
       <label className="flex flex-col items-center justify-center w-full min-h-[200px] border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50 hover:bg-slate-100 transition-all cursor-pointer p-6 text-center">
         <input
           type="file"
           multiple
-          accept="image/jpeg,image/png,image/webp" // Explicitly allow these
+          accept="image/jpeg,image/png,image/webp"
           onChange={uploadImages}
           disabled={uploading}
-          className="sr-only" // Hide it but keep it functional
+          className="sr-only"
         />
 
         <div className="space-y-2">
@@ -83,7 +105,7 @@ export default function Uploader({ galleryId }: { galleryId: string }) {
         </div>
       </label>
 
-      {/* Progress Bar (Very important for mobile so they don't think it's frozen) */}
+      {/* Progress Overlay */}
       {uploading && (
         <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] rounded-3xl flex items-center justify-center p-10">
           <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">

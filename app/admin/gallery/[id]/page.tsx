@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Uploader from "@/components/Uploader";
 import CopyLinkButton from "@/components/CopyLinkButton";
+import PublishButton from "@/components/PublishButton";
 import {
   Eye,
   Image as ImageIcon,
@@ -141,8 +142,12 @@ export default async function PixiesetGalleryManager({ params }: any) {
             <h1 className="text-xl font-serif italic">Highlights</h1>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-3">
             <CopyLinkButton galleryId={id} />
+
+            {/* NEW INTERACTIVE BUTTON */}
+            <PublishButton galleryId={id} isPublic={gallery.is_public} />
+
             <Link
               href={`/gallery/${id}`}
               target="_blank"
