@@ -46,20 +46,10 @@ export default async function PixiesetGalleryManager({ params }: any) {
     : null;
 
   return (
-    <div className="flex flex-col lg:flex-row h-screen bg-white overflow-hidden">
-      {/* Mobile Header - only visible on small screens */}
-      <header className="lg:hidden p-4 border-b bg-white flex justify-between items-center sticky top-0 z-50">
-        <Link href="/admin">
-          <ChevronLeft />
-        </Link>
-        <span className="font-bold text-sm uppercase tracking-widest">
-          {gallery.title}
-        </span>
-        <CopyLinkButton galleryId={id} />
-      </header>
-
-      {/* 1. LEFT SIDEBAR - Management */}
-      <aside className="w-80 border-r border-slate-100 bg-white flex flex-col shrink-0 h-full">
+    /* Changed h-screen to min-h-screen and removed overflow-hidden to allow scrolling */
+    <div className="flex flex-col lg:flex-row min-h-screen bg-white">
+      {/* 1. LEFT SIDEBAR - Optimized for Desktop, Hidden/Sticky on Mobile */}
+      <aside className="w-full lg:w-80 border-r border-slate-100 bg-white flex flex-col shrink-0">
         <div className="p-4 border-b border-slate-100 flex items-center gap-2">
           <Link
             href="/admin"
@@ -67,127 +57,106 @@ export default async function PixiesetGalleryManager({ params }: any) {
           >
             <ChevronLeft size={20} />
           </Link>
+          {/* We keep the title here for the sidebar view */}
           <span className="font-bold text-slate-800 truncate">
             {gallery.title}
           </span>
         </div>
 
-        {/* Cover Preview Section */}
-        <div className="p-6 border-b border-slate-50">
-          <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-3">
-            Gallery Cover
-          </p>
-          <div className="aspect-[3/2] bg-slate-100 rounded-xl overflow-hidden border border-slate-200 relative group">
-            {coverUrl ? (
-              <img
-                src={coverUrl}
-                className="w-full h-full object-cover"
-                alt="Cover"
-              />
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-2">
-                <ImageIcon size={24} strokeWidth={1} />
-                <span className="text-[10px] uppercase font-bold">
-                  No Cover Set
-                </span>
-              </div>
-            )}
-          </div>
-          <p className="text-[10px] text-slate-400 mt-3 italic text-center">
-            {" "}
-            Hover over any image in the grid to set it as cover{" "}
-          </p>
-        </div>
-
-        {/* 2. Stat Card in the Sidebar */}
-        <div className="p-6 bg-blue-50/50 border-y border-blue-100">
-          <p className="text-[10px] uppercase tracking-widest text-blue-400 font-bold mb-1">
-            Client Activity
-          </p>
-          <div className="flex items-center gap-2">
-            <Heart size={16} className="text-blue-600 fill-blue-600" />
-            <span className="text-sm font-bold text-blue-900">
-              {favoriteIds.size} Photos Favorited
-            </span>
-          </div>
-        </div>
-
-        {/* Info Section (Replaces redundant PIN input) */}
-        <div className="p-6 space-y-4">
-          <div>
-            <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">
-              Status
+        {/* This area now scrolls if the screen is short */}
+        <div className="flex-1 overflow-y-auto pb-20 lg:pb-0">
+          {/* Cover Preview Section */}
+          <div className="p-6 border-b border-slate-50">
+            <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-3">
+              Gallery Cover
             </p>
-            <div className="flex items-center gap-2 mt-1">
-              <div
-                className={`w-2 h-2 rounded-full ${gallery.is_public ? "bg-green-500" : "bg-orange-400"}`}
-              />
-              <span className="text-sm font-medium">
-                {gallery.is_public ? "Published" : "Draft"}
-              </span>
+            <div className="aspect-[3/2] bg-slate-100 rounded-xl overflow-hidden border border-slate-200 relative group">
+              {coverUrl ? (
+                <img
+                  src={coverUrl}
+                  className="w-full h-full object-cover"
+                  alt="Cover"
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-2">
+                  <ImageIcon size={24} strokeWidth={1} />
+                  <span className="text-[10px] uppercase font-bold">
+                    No Cover
+                  </span>
+                </div>
+              )}
             </div>
           </div>
-          <div>
-            <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">
-              Access Code
-            </p>
-            <span className="text-sm font-mono bg-slate-50 px-2 py-1 rounded mt-1 inline-block">
-              {gallery.password || "None"}
-            </span>
+
+          {/* Stats & PIN */}
+          <div className="p-6 space-y-6">
+            <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
+              <p className="text-[10px] uppercase tracking-widest text-blue-400 font-bold mb-1">
+                Client Activity
+              </p>
+              <div className="flex items-center gap-2">
+                <Heart size={16} className="text-blue-600 fill-blue-600" />
+                <span className="text-sm font-bold text-blue-900">
+                  {favoriteIds.size} Favorites
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">
+                Access PIN
+              </p>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-lg font-mono font-bold tracking-widest bg-slate-100 px-4 py-2 rounded-lg border border-slate-200">
+                  {gallery.password || "None"}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="mt-auto p-4 space-y-2 border-t border-slate-100">
+        {/* Mobile-only Preview Button fixed at bottom of sidebar or hidden */}
+        <div className="hidden lg:block p-4 border-t border-slate-100">
           <Link
             href={`/gallery/${id}`}
             target="_blank"
-            className="w-full flex items-center justify-center gap-2 py-3 bg-white border border-slate-200 text-slate-900 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-slate-50 transition shadow-sm"
+            className="w-full flex items-center justify-center gap-2 py-4 bg-slate-900 text-white rounded-2xl font-bold text-xs uppercase tracking-widest"
           >
             <Eye size={16} /> Preview Gallery
           </Link>
         </div>
       </aside>
 
-      {/* 2. MAIN CONTENT AREA - Grid & Uploader */}
-      <main className="flex-1 overflow-y-auto bg-white">
-        <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md px-8 py-6 border-b border-slate-100 flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-serif italic text-slate-900">
+      {/* 2. MAIN CONTENT AREA */}
+      <main className="flex-1 bg-white">
+        {/* We REMOVED the redundant title header from here to fix the "Double Title" */}
+        <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+          <div className="lg:hidden">
+            {/* This only shows on mobile */}
+            <span className="font-bold text-xs uppercase tracking-widest">
               Highlights
-            </h1>
-            <p className="text-slate-400 text-xs mt-1">
-              {photos?.length || 0} images uploaded
-            </p>
+            </span>
+          </div>
+          <div className="hidden lg:block">
+            <h1 className="text-xl font-serif italic">Highlights</h1>
           </div>
 
-          <div className="flex gap-3">
-            {/* SHARE BUTTON: Now wraps the CopyLink logic */}
+          <div className="flex gap-2">
             <CopyLinkButton galleryId={id} />
-
-            {/* PUBLISH BUTTON: Link this to your is_public toggle */}
-            <form
-              action={async () => {
-                "use server";
-                await updateGallerySettings(id, {
-                  is_public: !gallery.is_public,
-                });
-              }}
+            <Link
+              href={`/gallery/${id}`}
+              target="_blank"
+              className="lg:hidden p-2 bg-slate-100 rounded-lg"
             >
-              <button
-                type="submit"
-                className={`px-6 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest transition shadow-lg ${gallery.is_public ? "bg-slate-100 text-slate-600" : "bg-[#00c2a0] text-white hover:bg-[#00ad8e]"}`}
-              >
-                {gallery.is_public ? "Unpublish" : "Publish"}
-              </button>
-            </form>
+              <Eye size={18} />
+            </Link>
           </div>
         </header>
 
-        <div className="p-8 space-y-12">
-          {/* Uploader */}
+        <div className="p-6 space-y-10">
           <Uploader galleryId={id} />
 
-          {/* 3. The Photo Grid */}
+          {/* Photo Grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
             {photos?.map((photo) => {
               const publicUrl = supabase.storage
@@ -199,7 +168,11 @@ export default async function PixiesetGalleryManager({ params }: any) {
               return (
                 <div
                   key={photo.id}
-                  className={`group relative aspect-square rounded-2xl overflow-hidden border-2 transition-all ${isCover ? "border-blue-500 ring-4 ring-blue-50" : "border-transparent"}`}
+                  className={`group relative aspect-square rounded-2xl overflow-hidden border-2 transition-all ${
+                    isCover
+                      ? "border-blue-500 ring-4 ring-blue-50"
+                      : "border-transparent"
+                  }`}
                 >
                   <img
                     src={publicUrl}
