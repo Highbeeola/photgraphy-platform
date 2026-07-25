@@ -8,6 +8,7 @@ export async function createGallery(formData: FormData) {
   const title = formData.get("title") as string;
   const eventDate = formData.get("eventDate") as string;
   const isPublic = formData.get("isPublic") === "on";
+  const password = formData.get("password") as string;
 
   const {
     data: { user },
@@ -20,6 +21,7 @@ export async function createGallery(formData: FormData) {
       event_date: eventDate || null,
       is_public: isPublic,
       photographer_id: user.id,
+      password: password || null,
     },
   ]);
 
@@ -57,5 +59,53 @@ export async function assignGalleryToClient(
 
   if (error) return { error: error.message };
   revalidatePath(`/admin/gallery/${galleryId}`);
+  return { success: true };
+}
+export async function setGalleryCover(galleryId: string, imagePath: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("galleries")
+    .update({ cover_image_path: imagePath })
+    .eq("id", galleryId);
+
+  if (error) {
+    console.error(error);
+    return { error: error.message };
+  }
+
+  // This tells Next.js to clear the old images and show the new cover immediately
+  revalidatePath(`/admin/gallery/${galleryId}`);
+  revalidatePath("/admin");
+  revalidatePath("/portfolio");
+  return { success: true };
+}
+export async function quickAddClient(fullName: string, email: string) {
+  const supabase = await createClient();
+
+  // This inserts a basic record into your public users table
+  const { error } = await supabase
+    .from("users")
+    .insert([{ full_name: fullName, email: email, role: "client" }]);
+
+  if (error) return { error: error.message };
+  revalidatePath("/admin/clients");
+  return { success: true };
+}
+// app/admin/actions.ts
+
+// ... (keep your existing createGallery, deleteGallery, etc.)
+
+export async function updateGallerySettings(
+  id: string,
+  settings: { password?: string; is_public?: boolean },
+) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("galleries")
+    .update(settings)
+    .eq("id", id);
+  if (error) return { error: error.message };
+  revalidatePath(`/admin/gallery/${id}`);
   return { success: true };
 }

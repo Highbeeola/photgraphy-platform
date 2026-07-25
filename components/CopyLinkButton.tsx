@@ -6,24 +6,24 @@ import { toast } from "sonner";
 export default function CopyLinkButton({ galleryId }: { galleryId: string }) {
   const [copied, setCopied] = useState(false);
 
-  const copy = (e: React.MouseEvent) => {
-    e.preventDefault(); // Stop from opening the gallery
+  const copy = () => {
+    // This is the direct link Dara sends on WhatsApp
     const url = `${window.location.origin}/gallery/${galleryId}`;
     navigator.clipboard.writeText(url);
     setCopied(true);
-    toast.success("Link copied for WhatsApp!");
+    toast.success("Link copied!");
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
     <button
       onClick={copy}
-      className="p-2.5 bg-white/90 hover:bg-white text-slate-900 rounded-xl backdrop-blur-md shadow-xl transition-all active:scale-95"
+      className="p-2 hover:bg-slate-200 rounded-lg transition"
     >
       {copied ? (
-        <Check size={18} className="text-green-600" />
+        <Check size={16} className="text-green-600" />
       ) : (
-        <Share2 size={18} />
+        <Share2 size={16} />
       )}
     </button>
   );

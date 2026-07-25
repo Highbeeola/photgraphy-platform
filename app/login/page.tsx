@@ -25,39 +25,43 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
 
-    // 1. Log in
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
+    // 1. FRESH START
+    await supabase.auth.signOut();
+
+    // 2. SIGN IN
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (authError) {
-      alert("Auth Error: " + authError.message);
+    if (error) {
+      alert("LOGIN ERROR: " + error.message);
       setLoading(false);
       return;
     }
 
-    // 2. FETCH AND LOG (Watch the alert closely)
-    const { data: profile, error: profileError } = await supabase
+    // 3. FETCH ROLE
+    const { data: profile, error: roleError } = await supabase
       .from("users")
       .select("role")
       .eq("id", data.user.id)
       .single();
 
-    if (profileError) {
-      // THIS ALERT WILL REVEAL THE TRUTH
-      alert(
-        "DATABASE ERROR: " + profileError.code + " - " + profileError.message,
-      );
-      window.location.href = "/portal";
+    if (roleError || !profile) {
+      alert("DATABASE ERROR: Profile not found for ID: " + data.user.id);
+      window.location.replace("/portal");
       return;
     }
 
-    // 3. SUCCESS REDIRECT
+    // THIS IS THE MOST IMPORTANT LINE
+    alert("STOP! Your role in the database is: [" + profile.role + "]");
+
     if (profile.role === "photographer") {
-      window.location.assign("/admin");
+      alert("Redirecting to ADMIN...");
+      window.location.replace("/admin");
     } else {
-      window.location.assign("/portal");
+      alert("Redirecting to PORTAL...");
+      window.location.replace("/portal");
     }
   };
   const handleGoogleLogin = async () => {

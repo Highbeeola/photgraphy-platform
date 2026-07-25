@@ -22,3 +22,18 @@ export async function submitBooking(formData: FormData) {
   revalidatePath("/admin/bookings");
   return { success: true };
 }
+export async function setGalleryCover(galleryId: string, imagePath: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("galleries")
+    .update({ cover_image_path: imagePath })
+    .eq("id", galleryId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/admin/gallery/${galleryId}`);
+  revalidatePath("/admin");
+  revalidatePath("/portfolio");
+  return { success: true };
+}

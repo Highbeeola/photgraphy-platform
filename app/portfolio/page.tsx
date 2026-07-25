@@ -32,9 +32,11 @@ export default async function PortfolioPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16">
           {galleries?.map((gallery) => {
-            const coverPhoto = gallery.photos?.[0]?.storage_path;
-            const coverUrl = coverPhoto
-              ? supabase.storage.from("galleries").getPublicUrl(coverPhoto).data
+            // NEW LOGIC for finding the cover
+            const coverPath =
+              gallery.cover_image_path || gallery.photos?.[0]?.storage_path;
+            const coverUrl = coverPath
+              ? supabase.storage.from("galleries").getPublicUrl(coverPath).data
                   .publicUrl
               : null;
 
