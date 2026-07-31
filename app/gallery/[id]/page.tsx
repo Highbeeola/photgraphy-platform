@@ -15,11 +15,14 @@ export default async function ClientGalleryPage({ params, searchParams }: any) {
     .single();
   if (!gallery) notFound();
 
-  // 1. SECURITY: If not published and not admin, hide it
-  // (We'll implement this fully later, for now let's focus on the look)
+  // NEW LOGIC:
+  // 1. If it's a DRAFT (not public) and has NO password, only the Admin should see it.
+  // 2. If it's NOT PUBLIC but HAS a password, check the PIN.
+  // 3. If it's PUBLIC, let everyone in regardless of password.
+  const shouldShowPIN =
+    !gallery.is_public && gallery.password && gallery.password !== pw;
 
-  // 2. PASSWORD CHECK
-  if (gallery.password && gallery.password !== pw) {
+  if (shouldShowPIN) {
     return <GalleryPasswordGateway galleryId={id} />;
   }
 

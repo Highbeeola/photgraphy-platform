@@ -12,8 +12,14 @@ import {
   Check,
   Globe,
   Heart,
+  Lock,
+  Star,
 } from "lucide-react";
-import { setGalleryCover, updateGallerySettings } from "../../actions"; // Make sure these are exported in actions.ts
+import {
+  setGalleryCover,
+  updateGallerySettings,
+  togglePhotoFeature,
+} from "../../actions"; // Make sure togglePhotoFeature is exported in actions.ts
 import Link from "next/link";
 
 export default async function PixiesetGalleryManager({ params }: any) {
@@ -66,6 +72,28 @@ export default async function PixiesetGalleryManager({ params }: any) {
 
         {/* This area now scrolls if the screen is short */}
         <div className="flex-1 overflow-y-auto pb-20 lg:pb-0">
+          {/* Visibility Section */}
+          <div className="p-6 bg-slate-50 border-b border-slate-100">
+            <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2">
+              Visibility
+            </p>
+            {gallery.is_public ? (
+              <div className="flex items-center gap-2 text-green-600">
+                <Globe size={14} />
+                <span className="text-xs font-bold uppercase tracking-tight">
+                  Visible on Portfolio
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-slate-400">
+                <Lock size={14} />
+                <span className="text-xs font-bold uppercase tracking-tight">
+                  Private (Link Only)
+                </span>
+              </div>
+            )}
+          </div>
+
           {/* Cover Preview Section */}
           <div className="p-6 border-b border-slate-50">
             <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-3">
@@ -184,6 +212,30 @@ export default async function PixiesetGalleryManager({ params }: any) {
                     className="object-cover w-full h-full"
                     alt="Gallery item"
                   />
+
+                  {/* Top-left controls (Feature Star Button) */}
+                  <div className="absolute top-2 left-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                    <form
+                      action={async () => {
+                        "use server";
+                        await togglePhotoFeature(photo.id, !photo.is_featured);
+                      }}
+                    >
+                      <button
+                        type="submit"
+                        className={`p-2 rounded-full backdrop-blur-md transition ${
+                          photo.is_featured
+                            ? "bg-amber-400 text-white"
+                            : "bg-white/80 text-slate-400 hover:text-amber-500"
+                        }`}
+                      >
+                        <Star
+                          size={14}
+                          fill={photo.is_featured ? "currentColor" : "none"}
+                        />
+                      </button>
+                    </form>
+                  </div>
 
                   {isFavorited && (
                     <div className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-full shadow-sm z-10">

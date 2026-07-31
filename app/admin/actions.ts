@@ -120,3 +120,14 @@ export async function updateGallerySettings(
   revalidatePath("/portfolio");
   return { success: true };
 }
+export async function togglePhotoFeature(photoId: string, isFeatured: boolean) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("photos")
+    .update({ is_featured: isFeatured })
+    .eq("id", photoId);
+
+  if (error) return { error: error.message };
+  revalidatePath("/"); // Refresh homepage
+  return { success: true };
+}
