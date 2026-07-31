@@ -131,3 +131,14 @@ export async function togglePhotoFeature(photoId: string, isFeatured: boolean) {
   revalidatePath("/"); // Refresh homepage
   return { success: true };
 }
+export async function toggleHeroStatus(photoId: string, isHero: boolean) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("photos")
+    .update({ is_hero: isHero })
+    .eq("id", photoId);
+
+  if (error) return { error: error.message };
+  revalidatePath("/");
+  return { success: true };
+}

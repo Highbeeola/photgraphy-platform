@@ -1,163 +1,187 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import { signOut } from "@/app/auth/actions";
 import HeroCarousel from "@/components/HeroCarousel";
-import { Mail, Type, Star } from "lucide-react";
-import { FaInstagram, FaTiktok } from "react-icons/fa6";
-
+import { Mail, ArrowRight, Star } from "lucide-react";
+import { FaInstagram, FaTiktok, FaSnapchat, FaWhatsapp } from "react-icons/fa6";
+import { SiGmail } from "react-icons/si";
 export default async function HomePage() {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  // Fetch Selected Work (Only photos flagged as is_featured from public galleries)
-  const { data: selectedWork } = await supabase
+  // 1. Fetch Carousel Images (using the is_hero logic)
+  const { data: heroPhotos } = await supabase
+    .from("photos")
+    .select("*, galleries(is_public)")
+    .eq("is_hero", true)
+    .eq("galleries.is_public", true);
+
+  // 2. Fetch Selection Grid (using the is_featured logic)
+  const { data: featuredPhotos } = await supabase
     .from("photos")
     .select("*, galleries(is_public)")
     .eq("is_featured", true)
     .eq("galleries.is_public", true)
     .limit(9);
 
-  const categories = [
-    "Lifestyle",
-    "Portraits",
-    "Events",
-    "Graduation",
-    "Fashion",
-  ];
+  // Transform for Carousel
+  const heroImages =
+    heroPhotos?.map((p) => ({
+      url: supabase.storage.from("galleries").getPublicUrl(p.storage_path).data
+        .publicUrl,
+    })) || [];
 
   return (
     <div className="min-h-screen bg-white text-[#1a1a1a] selection:bg-slate-100">
-      {/* --- 1. MINIMAL NAV --- */}
-      <nav className="py-4 md:py-8 flex justify-center bg-white">
+      {/* --- 1. NAV (Logo Only) --- */}
+      <nav className="py-6 md:py-10 flex justify-center bg-white">
         <img
           src="/logo.png"
           alt="Dara Pixel"
-          className="h-8 md:h-10 w-auto object-contain"
+          className="h-8 md:h-12 w-auto object-contain"
         />
       </nav>
 
-      {/* --- 2. THE HERO CAROUSEL --- */}
+      {/* --- 2. DYNAMIC HERO CAROUSEL --- */}
       <section className="px-4 md:px-12">
-        <HeroCarousel />
+        <HeroCarousel photos={heroImages} />
       </section>
 
-      {/* --- 3. CATEGORIES --- */}
-      <section className="py-24 border-b border-slate-50 overflow-x-auto whitespace-nowrap px-6 no-scrollbar">
-        <div className="max-w-4xl mx-auto flex justify-center gap-12 md:gap-20">
-          {categories.map((cat) => (
-            <Link
-              key={cat}
-              href={`/portfolio?cat=${cat}`}
-              className="text-[10px] uppercase tracking-[0.4em] font-black text-slate-400 hover:text-black transition"
-            >
-              {cat}
-            </Link>
-          ))}
+      {/* --- 3. THE ABOUT SECTION --- */}
+      <section className="max-w-6xl mx-auto px-6 py-32 md:py-48 grid grid-cols-1 md:grid-cols-12 gap-16 md:gap-24 items-center">
+        <div className="md:col-span-5 order-2 md:order-1">
+          <div className="aspect-[3/4] bg-slate-100 grayscale-[10%] overflow-hidden shadow-2xl rounded-sm">
+            <img
+              src="/dara-portrait.jpg"
+              alt="Dara"
+              className="w-full h-full object-cover"
+            />
+          </div>
         </div>
-      </section>
-
-      {/* --- 4. THE ABOUT --- */}
-      <section className="max-w-5xl mx-auto px-6 py-32 grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
-        <div className="aspect-[3/4] bg-slate-100 grayscale-[20%] overflow-hidden shadow-2xl">
-          <img
-            src="/dara-portrait.jpg"
-            className="w-full h-full object-cover"
-            alt="Dara Portrait"
-          />
-        </div>
-        <div className="space-y-6">
-          <h3 className="text-[10px] uppercase tracking-[0.5em] text-slate-300 font-bold">
+        <div className="md:col-span-7 space-y-8 order-1 md:order-2">
+          <span className="text-[10px] uppercase tracking-[0.5em] text-slate-300 font-bold">
             The Storyteller
-          </h3>
-          <h2 className="text-4xl font-serif italic leading-snug">
-            Hi, I'm Dara. I document the poetry of life.
+          </span>
+          <h2 className="text-4xl md:text-7xl font-serif italic leading-tight tracking-tighter">
+            Hi, I'm Dara. <br /> I document the poetry <br /> of human
+            connection.
           </h2>
-          <p className="text-slate-500 font-light leading-relaxed">
+          <p className="text-slate-500 font-light text-lg md:text-xl leading-relaxed max-w-lg">
             Based in Lagos, I specialize in lifestyle and editorial photography.
             I'm here to help you remember exactly how a moment felt, not just
             how it looked.
           </p>
-          <Link
-            href="mailto:hello@darapixel.com"
-            className="inline-block border-b border-black pb-1 text-[10px] uppercase tracking-widest font-bold pt-4"
-          >
-            Let's Connect
-          </Link>
-        </div>
-      </section>
-
-      {/* --- 5. SELECTED WORK --- */}
-      <section className="bg-[#fafafa] py-32">
-        <div className="max-w-6xl mx-auto px-6">
-          <h3 className="text-center text-[10px] uppercase tracking-[0.5em] text-slate-300 font-bold mb-20">
-            Selected Work
-          </h3>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8">
-            {selectedWork && selectedWork.length > 0 ? (
-              selectedWork.map((photo) => {
-                const publicUrl = supabase.storage
-                  .from("galleries")
-                  .getPublicUrl(photo.storage_path).data.publicUrl;
-                return (
-                  <div
-                    key={photo.id}
-                    className="aspect-square bg-slate-100 overflow-hidden rounded-sm group relative"
-                  >
-                    <img
-                      src={publicUrl}
-                      className="w-full h-full object-cover transition duration-700 group-hover:scale-105"
-                      alt="Featured Work"
-                    />
-                  </div>
-                );
-              })
-            ) : (
-              /* Fallback if nothing is starred yet */
-              <div className="col-span-full text-center py-20 text-slate-300 italic text-sm">
-                Select "Feature" on photos in your dashboard to show them here.
-              </div>
-            )}
+          <div className="pt-6">
+            <Link
+              href="/portfolio"
+              className="bg-black text-white px-14 py-5 rounded-full text-[10px] uppercase tracking-[0.4em] font-black hover:bg-slate-800 transition-all shadow-xl active:scale-95 inline-block"
+            >
+              Explore All Work
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* --- 6. TESTIMONIALS --- */}
-      <section className="py-32 text-center max-w-3xl mx-auto px-6">
-        <Star className="mx-auto mb-8 text-slate-200" size={32} />
-        <p className="text-2xl md:text-3xl font-serif italic text-slate-600 leading-relaxed">
-          "Dara has an incredible eye for detail. The session was relaxed and
-          the photos are beyond what we imagined."
-        </p>
-        <span className="block mt-6 text-[10px] uppercase tracking-widest font-bold">
-          — Tolu & Ade
-        </span>
+      {/* --- 4. SELECTED WORK GRID --- */}
+      <section className="bg-[#fafafa] py-32 md:py-48 border-y border-slate-100">
+        <div className="max-w-7xl mx-auto px-6">
+          <header className="mb-20 text-center space-y-4">
+            <h3 className="text-[10px] uppercase tracking-[0.6em] text-slate-300 font-bold">
+              Selected Moments
+            </h3>
+            <div className="w-12 h-[1px] bg-slate-200 mx-auto" />
+          </header>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
+            {featuredPhotos?.map((photo) => {
+              const url = supabase.storage
+                .from("galleries")
+                .getPublicUrl(photo.storage_path).data.publicUrl;
+              return (
+                <div
+                  key={photo.id}
+                  className="aspect-[4/5] bg-white overflow-hidden shadow-sm group"
+                >
+                  <img
+                    src={url}
+                    className="w-full h-full object-cover grayscale-[10%] group-hover:grayscale-0 transition duration-700 group-hover:scale-105"
+                    alt="Featured"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </section>
 
-      {/* --- 7. FINAL CTA --- */}
-      <section className="py-40 bg-slate-900 text-white text-center">
-        <h2 className="text-4xl md:text-6xl font-serif italic mb-10">
+      {/* --- 5. THE DARK CTA SECTION (Your Preferred Style) --- */}
+      <section className="py-40 bg-[#0f172a] text-white text-center px-6">
+        <h2 className="text-4xl md:text-6xl font-serif italic mb-12 tracking-tight">
           Ready to create?
         </h2>
-        <Link
-          href="mailto:hello@darapixel.com"
-          className="bg-white text-black px-16 py-5 rounded-full text-[10px] uppercase tracking-[0.4em] font-black hover:bg-slate-200 transition"
+        <a
+          href="https://wa.me/2347072830957?text=Hi%20Dara,%20I%20saw%20your%20portfolio%20and%20I'd%20like%20to%20book%20a%20session!"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-3 bg-white text-black px-16 py-5 rounded-full text-[10px] uppercase tracking-[0.4em] font-black hover:bg-slate-200 transition active:scale-95 shadow-2xl"
         >
-          Book a Session
-        </Link>
+          <FaWhatsapp size={16} />
+          Book via WhatsApp
+        </a>
       </section>
 
-      {/* --- 8. FOOTER --- */}
-      <footer className="py-12 flex flex-col items-center gap-4 bg-white">
-        <div className="flex gap-12 text-slate-300">
-          <a href="#" className="hover:text-black transition">
-            <FaInstagram size={20} />
+      {/* --- 6. FOOTER (Icons and Copyright on White) --- */}
+      <footer className="py-20 flex flex-col items-center gap-10 bg-white">
+        <div className="flex flex-wrap justify-center gap-10 md:gap-12 text-slate-300 px-6">
+          <a
+            href="https://instagram.com/..."
+            target="_blank"
+            className="hover:text-black transition"
+          >
+            <FaInstagram size={22} />
           </a>
-          <a href="#" className="hover:text-black transition">
-            <FaTiktok size={20} />
+          <a
+            href="https://tiktok.com/..."
+            target="_blank"
+            className="hover:text-black transition"
+          >
+            <FaTiktok size={22} />
+          </a>
+          <a
+            href="https://snapchat.com/add/..."
+            target="_blank"
+            className="hover:text-yellow-400 transition"
+          >
+            <FaSnapchat size={22} /> {/* Updated tag here */}
+          </a>
+          <a
+            href="mailto:khalidabdul2023i@gmail.com"
+            className="hover:text-red-500 transition"
+          >
+            <SiGmail size={22} />
           </a>
         </div>
-        <p className="text-[9px] text-slate-200">
-          <Link href="/login">©</Link> Dara Pixel 2024
-        </p>
+
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-[10px] text-slate-300 uppercase tracking-[0.5em] font-medium text-center">
+            <Link href="/login" className="hover:text-slate-500 transition">
+              ©
+            </Link>{" "}
+            Dara Pixel 2024
+          </p>
+          {user && (
+            <form action={signOut}>
+              <button
+                type="submit"
+                className="text-[9px] uppercase tracking-widest text-red-300 hover:text-red-500 transition"
+              >
+                Sign Out
+              </button>
+            </form>
+          )}
+        </div>
       </footer>
     </div>
   );

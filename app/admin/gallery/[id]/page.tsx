@@ -14,12 +14,14 @@ import {
   Heart,
   Lock,
   Star,
+  Home,
 } from "lucide-react";
 import {
   setGalleryCover,
   updateGallerySettings,
   togglePhotoFeature,
-} from "../../actions"; // Make sure togglePhotoFeature is exported in actions.ts
+  toggleHeroStatus,
+} from "../../actions";
 import Link from "next/link";
 
 export default async function PixiesetGalleryManager({ params }: any) {
@@ -42,7 +44,6 @@ export default async function PixiesetGalleryManager({ params }: any) {
   const { data: favorites } = await supabase
     .from("favorites")
     .select("photo_id")
-    // We check which photos in THIS gallery are in the favorites table
     .in("photo_id", photos?.map((p) => p.id) || []);
 
   const favoriteIds = new Set(favorites?.map((f) => f.photo_id));
@@ -53,9 +54,8 @@ export default async function PixiesetGalleryManager({ params }: any) {
     : null;
 
   return (
-    /* Changed h-screen to min-h-screen and removed overflow-hidden to allow scrolling */
     <div className="flex flex-col lg:flex-row min-h-screen bg-white">
-      {/* 1. LEFT SIDEBAR - Optimized for Desktop, Hidden/Sticky on Mobile */}
+      {/* 1. LEFT SIDEBAR */}
       <aside className="w-full lg:w-80 border-r border-slate-100 bg-white flex flex-col shrink-0">
         <div className="p-4 border-b border-slate-100 flex items-center gap-2">
           <Link
@@ -64,13 +64,11 @@ export default async function PixiesetGalleryManager({ params }: any) {
           >
             <ChevronLeft size={20} />
           </Link>
-          {/* We keep the title here for the sidebar view */}
           <span className="font-bold text-slate-800 truncate">
             {gallery.title}
           </span>
         </div>
 
-        {/* This area now scrolls if the screen is short */}
         <div className="flex-1 overflow-y-auto pb-20 lg:pb-0">
           {/* Visibility Section */}
           <div className="p-6 bg-slate-50 border-b border-slate-100">
@@ -144,7 +142,6 @@ export default async function PixiesetGalleryManager({ params }: any) {
           </div>
         </div>
 
-        {/* Mobile-only Preview Button fixed at bottom of sidebar or hidden */}
         <div className="hidden lg:block p-4 border-t border-slate-100">
           <Link
             href={`/gallery/${id}`}
@@ -158,10 +155,8 @@ export default async function PixiesetGalleryManager({ params }: any) {
 
       {/* 2. MAIN CONTENT AREA */}
       <main className="flex-1 bg-white">
-        {/* We REMOVED the redundant title header from here to fix the "Double Title" */}
         <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md px-6 py-4 border-b border-slate-100 flex justify-between items-center">
           <div className="lg:hidden">
-            {/* This only shows on mobile */}
             <span className="font-bold text-xs uppercase tracking-widest">
               Highlights
             </span>
@@ -172,10 +167,7 @@ export default async function PixiesetGalleryManager({ params }: any) {
 
           <div className="flex gap-3">
             <CopyLinkButton galleryId={id} />
-
-            {/* NEW INTERACTIVE BUTTON */}
             <PublishButton galleryId={id} isPublic={gallery.is_public} />
-
             <Link
               href={`/gallery/${id}`}
               target="_blank"
@@ -213,8 +205,31 @@ export default async function PixiesetGalleryManager({ params }: any) {
                     alt="Gallery item"
                   />
 
-                  {/* Top-left controls (Feature Star Button) */}
+                  {/* Top-left controls (Hero & Featured Buttons) */}
                   <div className="absolute top-2 left-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                    {/* HERO TOGGLE (Home Icon) */}
+                    <form
+                      action={async () => {
+                        "use server";
+                        await toggleHeroStatus(photo.id, !photo.is_hero);
+                      }}
+                    >
+                      <button
+                        type="submit"
+                        className={`p-2 rounded-full backdrop-blur-md transition ${
+                          photo.is_hero
+                            ? "bg-blue-500 text-white"
+                            : "bg-white/80 text-slate-400 hover:text-blue-500"
+                        }`}
+                      >
+                        <Home
+                          size={14}
+                          fill={photo.is_hero ? "currentColor" : "none"}
+                        />
+                      </button>
+                    </form>
+
+                    {/* FEATURED TOGGLE (Star Icon) */}
                     <form
                       action={async () => {
                         "use server";

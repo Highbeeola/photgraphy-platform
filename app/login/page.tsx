@@ -25,43 +25,30 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
 
-    // 1. FRESH START
-    await supabase.auth.signOut();
-
-    // 2. SIGN IN
-    const { data, error } = await supabase.auth.signInWithPassword({
+    // Sign In
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
-    if (error) {
-      alert("LOGIN ERROR: " + error.message);
+    if (authError) {
+      toast.error(authError.message);
       setLoading(false);
       return;
     }
 
-    // 3. FETCH ROLE
-    const { data: profile, error: roleError } = await supabase
+    // Fetch Role
+    const { data: profile } = await supabase
       .from("users")
       .select("role")
       .eq("id", data.user.id)
       .single();
 
-    if (roleError || !profile) {
-      alert("DATABASE ERROR: Profile not found for ID: " + data.user.id);
-      window.location.replace("/portal");
-      return;
-    }
-
-    // THIS IS THE MOST IMPORTANT LINE
-    alert("STOP! Your role in the database is: [" + profile.role + "]");
-
-    if (profile.role === "photographer") {
-      alert("Redirecting to ADMIN...");
-      window.location.replace("/admin");
+    // Redirect based on role (No more alerts!)
+    if (profile?.role === "photographer") {
+      window.location.assign("/admin");
     } else {
-      alert("Redirecting to PORTAL...");
-      window.location.replace("/portal");
+      window.location.assign("/portal");
     }
   };
   const handleGoogleLogin = async () => {
