@@ -69,17 +69,30 @@ export default function CreateGalleryForm() {
           <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">
             Category
           </label>
-          <select
-            name="category"
-            className="w-full p-3 border border-slate-200 rounded-xl bg-white outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option>Wedding</option>
-            <option>Lifestyle</option>
-            <option>Birthday</option>
-            <option>Convocation</option>
-            <option>Baby</option>
-            <option>Bridal Shower</option>
-          </select>
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">
+              Category
+            </label>
+
+            {/* The Input links to the datalist via the "list" attribute */}
+            <input
+              name="category"
+              list="category-suggestions"
+              placeholder="Select or type custom..."
+              defaultValue="Lifestyle" // Defaults to Lifestyle so he doesn't have to touch it if he doesn't want to!
+              className="w-full p-3 border border-slate-200 rounded-xl bg-white outline-none focus:ring-2 focus:ring-black transition"
+            />
+
+            {/* The Suggestions (He can pick these, or just type his own!) */}
+            <datalist id="category-suggestions">
+              <option value="Lifestyle" />
+              <option value="Wedding" />
+              <option value="Portrait" />
+              <option value="Editorial" />
+              <option value="Birthday" />
+              <option value="Event" />
+            </datalist>
+          </div>
         </div>
 
         <button
