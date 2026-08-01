@@ -1,10 +1,10 @@
-import { createClient } from "@/lib/supabase/server"; // Fixes 'createClient'
-import { revalidatePath } from "next/cache"; // Fixes 'revalidatePath'
-import CreateGalleryForm from "./CreateGalleryForm"; // Ensure this file exists in the same folder
-import { deleteGallery } from "./actions"; // Ensure 'actions.ts' exists in the same folder
-import { Trash2, Calendar, Image as ImageIcon } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
+import CreateGalleryForm from "./CreateGalleryForm";
+import { Calendar, Image as ImageIcon } from "lucide-react";
 import Link from "next/link";
 import CopyLinkButton from "@/components/CopyLinkButton";
+import DeleteGalleryButton from "@/components/DeleteGalleryButton";
 
 export default async function AdminDashboard() {
   const supabase = await createClient();
@@ -16,10 +16,6 @@ export default async function AdminDashboard() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-10 pb-20">
-      {/* 
-          If you get an error on <CreateGalleryForm />, 
-          make sure the file is named 'CreateGalleryForm.tsx' (case sensitive) 
-      */}
       <CreateGalleryForm />
 
       <section>
@@ -29,7 +25,7 @@ export default async function AdminDashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {galleries?.map((gallery) => {
-            // NEW LOGIC for finding the cover
+            // Checks explicit cover_image_path first, falls back to the first photo
             const coverPath =
               gallery.cover_image_path || gallery.photos?.[0]?.storage_path;
             const coverUrl = coverPath
@@ -39,39 +35,30 @@ export default async function AdminDashboard() {
 
             return (
               <div key={gallery.id} className="group relative">
-                {/* --- NEW: THE COPY LINK BUTTON (TOP RIGHT) --- */}
-                <div className="absolute top-4 right-4 z-30 opacity-0 group-hover:opacity-100 transition-all duration-300">
+                {/* 1. THE DELETE BUTTON (Client Component with modal/confirm support) */}
+                <div className="absolute top-3 left-3 z-30 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300">
+                  <DeleteGalleryButton
+                    galleryId={gallery.id}
+                    galleryTitle={gallery.title}
+                  />
+                </div>
+
+                {/* 2. THE SHARE BUTTON (Visible on mobile, hover-only on desktop) */}
+                <div className="absolute top-3 right-3 z-30 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300">
                   <CopyLinkButton galleryId={gallery.id} />
                 </div>
 
-                {/* --- EXISTING: THE DELETE BUTTON (TOP LEFT) --- */}
-                <div className="absolute top-4 left-4 z-30 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                  <form
-                    action={async () => {
-                      "use server";
-                      await deleteGallery(gallery.id);
-                    }}
-                  >
-                    <button
-                      type="submit"
-                      className="p-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl shadow-xl transition-colors cursor-pointer"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </form>
-                </div>
-
-                {/* CARD LINK */}
+                {/* 3. THE CARD LINK */}
                 <Link
                   href={`/admin/gallery/${gallery.id}`}
-                  className="block border border-slate-200 rounded-3xl bg-white overflow-hidden shadow-sm hover:shadow-2xl hover:border-blue-400 transition-all duration-500"
+                  className="block border border-slate-200 rounded-3xl bg-white overflow-hidden shadow-sm hover:shadow-xl hover:border-blue-400 transition-all duration-500"
                 >
                   <div className="aspect-[4/3] bg-slate-100 relative overflow-hidden">
                     {coverUrl ? (
                       <img
                         src={coverUrl}
                         alt={gallery.title}
-                        className="object-cover w-full h-full group-hover:scale-110 transition duration-700"
+                        className="w-full h-full object-cover group-hover:scale-110 transition duration-700"
                       />
                     ) : (
                       <div className="flex flex-col items-center justify-center h-full text-slate-300 gap-2">
@@ -82,34 +69,27 @@ export default async function AdminDashboard() {
                       </div>
                     )}
 
-                    <div className="absolute top-4 right-4">
+                    {/* Status Badge */}
+                    <div className="absolute bottom-3 right-3">
                       <span
-                        className={`text-[10px] uppercase font-black px-3 py-1.5 rounded-full shadow-sm backdrop-blur-md ${
+                        className={`text-[10px] font-black px-2.5 py-1 rounded-lg backdrop-blur-md uppercase tracking-wider ${
                           gallery.is_public
-                            ? "bg-green-500 text-white"
-                            : "bg-black/60 text-white"
+                            ? "bg-green-500/80 text-white"
+                            : "bg-black/50 text-white"
                         }`}
                       >
-                        {gallery.is_public ? "Public" : "Private"}
+                        {gallery.is_public ? "LIVE" : "DRAFT"}
                       </span>
                     </div>
                   </div>
 
-                  <div className="p-6">
-                    <h3 className="font-bold text-xl text-slate-900 group-hover:text-blue-600 transition truncate">
+                  <div className="p-5">
+                    <h3 className="font-bold text-slate-900 group-hover:text-blue-600 transition truncate">
                       {gallery.title}
                     </h3>
-                    <div className="flex items-center gap-2 text-slate-400 text-sm mt-2 font-medium">
-                      <Calendar size={14} />
-                      <span>
-                        {gallery.event_date
-                          ? new Date(gallery.event_date).toLocaleDateString(
-                              "en-US",
-                              { month: "short", year: "numeric" },
-                            )
-                          : "No Date"}
-                      </span>
-                    </div>
+                    <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">
+                      {gallery.category || "Lifestyle"}
+                    </p>
                   </div>
                 </Link>
               </div>
