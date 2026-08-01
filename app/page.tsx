@@ -5,26 +5,33 @@ import HeroCarousel from "@/components/HeroCarousel";
 import { Mail, ArrowRight, Star } from "lucide-react";
 import { FaInstagram, FaTiktok, FaSnapchat, FaWhatsapp } from "react-icons/fa6";
 import { SiGmail } from "react-icons/si";
+
 export default async function HomePage() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Determine user role for smart navigation link
+  const isPhotographer = user?.user_metadata?.role === "photographer";
+
   // 1. Fetch Carousel Images (using the is_hero logic)
-  const { data: heroPhotos } = await supabase
+  const { data: heroPhotos, error: heroError } = await supabase
     .from("photos")
-    .select("*, galleries(is_public)")
+    .select("*, galleries!inner(is_public)")
     .eq("is_hero", true)
     .eq("galleries.is_public", true);
 
   // 2. Fetch Selection Grid (using the is_featured logic)
-  const { data: featuredPhotos } = await supabase
+  const { data: featuredPhotos, error: featError } = await supabase
     .from("photos")
-    .select("*, galleries(is_public)")
+    .select("*, galleries!inner(is_public)")
     .eq("is_featured", true)
     .eq("galleries.is_public", true)
     .limit(9);
+
+  // LOG TO TERMINAL TO SEE IF IT'S WORKING
+  console.log("Carousel Photos found:", heroPhotos?.length);
 
   // Transform for Carousel
   const heroImages =
@@ -116,7 +123,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* --- 5. THE DARK CTA SECTION (Your Preferred Style) --- */}
+      {/* --- 5. THE DARK CTA SECTION --- */}
       <section className="py-40 bg-[#0f172a] text-white text-center px-6">
         <h2 className="text-4xl md:text-6xl font-serif italic mb-12 tracking-tight">
           Ready to create?
@@ -132,7 +139,7 @@ export default async function HomePage() {
         </a>
       </section>
 
-      {/* --- 6. FOOTER (Icons and Copyright on White) --- */}
+      {/* --- 6. FOOTER --- */}
       <footer className="py-20 flex flex-col items-center gap-10 bg-white">
         <div className="flex flex-wrap justify-center gap-10 md:gap-12 text-slate-300 px-6">
           <a
@@ -154,7 +161,7 @@ export default async function HomePage() {
             target="_blank"
             className="hover:text-yellow-400 transition"
           >
-            <FaSnapchat size={22} /> {/* Updated tag here */}
+            <FaSnapchat size={22} />
           </a>
           <a
             href="mailto:khalidabdul2023i@gmail.com"
@@ -166,7 +173,10 @@ export default async function HomePage() {
 
         <div className="flex flex-col items-center gap-4">
           <p className="text-[10px] text-slate-300 uppercase tracking-[0.5em] font-medium text-center">
-            <Link href="/login" className="hover:text-slate-500 transition">
+            <Link
+              href={user ? (isPhotographer ? "/admin" : "/portal") : "/login"}
+              className="hover:text-slate-500 transition"
+            >
               ©
             </Link>{" "}
             Dara Pixel 2024

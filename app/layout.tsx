@@ -17,8 +17,10 @@ const sans = Inter({
 
 export const metadata: Metadata = {
   title: "Dara Pixel | Fine Art Photography",
-  description:
-    "Capturing the raw, unscripted elegance of your most cherished days.",
+  description: "Capturing the raw, unscripted beauty of human connection.",
+  openGraph: {
+    images: ["/logo.png"], // This makes the logo show up on WhatsApp/Instagram links
+  },
 };
 
 // 2. Fix the 'any' error by defining the type here

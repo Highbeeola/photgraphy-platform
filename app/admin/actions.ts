@@ -140,3 +140,9 @@ export async function toggleHeroStatus(photoId: string, isHero: boolean) {
   revalidatePath("/");
   return { success: true };
 }
+export async function refreshGallery(id: string) {
+  // This clears the cache for both the Admin view and the Public view
+  revalidatePath(`/admin/gallery/${id}`);
+  revalidatePath(`/gallery/${id}`);
+  revalidatePath(`/portfolio`);
+}

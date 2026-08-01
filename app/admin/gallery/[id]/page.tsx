@@ -6,22 +6,15 @@ import { notFound } from "next/navigation";
 import Uploader from "@/components/Uploader";
 import CopyLinkButton from "@/components/CopyLinkButton";
 import PublishButton from "@/components/PublishButton";
+import AdminPhotoControls from "@/components/AdminPhotoControls";
 import {
   Eye,
   Image as ImageIcon,
   ChevronLeft,
-  Check,
   Globe,
   Heart,
   Lock,
-  Star,
-  Home,
 } from "lucide-react";
-import {
-  setGalleryCover,
-  togglePhotoFeature,
-  toggleHeroStatus,
-} from "../../actions";
 import Link from "next/link";
 
 // FIX 1: Explicitly type params as a Promise for Next.js 16
@@ -34,6 +27,7 @@ export default async function PixiesetGalleryManager({
   const { id } = await params;
   const supabase = await createClient();
 
+  // 1. Fetch Gallery
   const { data: gallery } = await supabase
     .from("galleries")
     .select("*")
@@ -42,11 +36,15 @@ export default async function PixiesetGalleryManager({
 
   if (!gallery) notFound();
 
-  const { data: photos } = await supabase
+  // 2. Fetch Photos (Fresh every time, ordered by newest first)
+  const { data: photos, error: photoError } = await supabase
     .from("photos")
     .select("*")
     .eq("gallery_id", id)
     .order("created_at", { ascending: true });
+
+  // Terminal logging to trace DB fetching
+  console.log("Photos found in DB:", photos?.length);
 
   const { data: favorites } = await supabase
     .from("favorites")
@@ -190,7 +188,11 @@ export default async function PixiesetGalleryManager({
               return (
                 <div
                   key={photo.id}
-                  className={`group relative aspect-square rounded-2xl overflow-hidden border-2 transition-all ${isCover ? "border-blue-500 ring-4 ring-blue-50" : "border-slate-100"}`}
+                  className={`group relative aspect-square rounded-2xl overflow-hidden border-2 transition-all ${
+                    isCover
+                      ? "border-blue-500 ring-4 ring-blue-50"
+                      : "border-slate-100"
+                  }`}
                 >
                   <img
                     src={publicUrl}
@@ -198,58 +200,15 @@ export default async function PixiesetGalleryManager({
                     alt="Gallery item"
                   />
 
-                  {/* FIXED MOBILE TOOLBAR: Visible on mobile, hover on desktop */}
-                  <div className="absolute inset-x-0 bottom-0 bg-black/60 backdrop-blur-md p-2 flex justify-around items-center translate-y-0 lg:translate-y-full lg:group-hover:translate-y-0 transition-transform duration-300 z-20">
-                    {/* HERO TOGGLE */}
-                    <form
-                      action={async () => {
-                        "use server";
-                        await toggleHeroStatus(photo.id, !photo.is_hero);
-                      }}
-                    >
-                      <button
-                        type="submit"
-                        className={`p-1.5 rounded-lg transition ${photo.is_hero ? "text-blue-400" : "text-white/40"}`}
-                      >
-                        <Home
-                          size={18}
-                          fill={photo.is_hero ? "currentColor" : "none"}
-                        />
-                      </button>
-                    </form>
-
-                    {/* FEATURED TOGGLE */}
-                    <form
-                      action={async () => {
-                        "use server";
-                        await togglePhotoFeature(photo.id, !photo.is_featured);
-                      }}
-                    >
-                      <button
-                        type="submit"
-                        className={`p-1.5 rounded-lg transition ${photo.is_featured ? "text-amber-400" : "text-white/40"}`}
-                      >
-                        <Star
-                          size={18}
-                          fill={photo.is_featured ? "currentColor" : "none"}
-                        />
-                      </button>
-                    </form>
-
-                    {/* COVER TOGGLE */}
-                    <form
-                      action={async () => {
-                        "use server";
-                        await setGalleryCover(id, photo.storage_path);
-                      }}
-                    >
-                      <button
-                        type="submit"
-                        className={`p-1.5 rounded-lg transition ${isCover ? "text-green-400" : "text-white/40"}`}
-                      >
-                        <ImageIcon size={18} />
-                      </button>
-                    </form>
+                  <div className="absolute inset-x-0 bottom-0 bg-black/80 backdrop-blur-md h-12 flex items-center justify-center z-20 translate-y-0 lg:translate-y-full lg:group-hover:translate-y-0 transition-transform duration-300">
+                    <AdminPhotoControls
+                      photoId={photo.id}
+                      galleryId={id}
+                      storagePath={photo.storage_path}
+                      initialIsHero={photo.is_hero}
+                      initialIsFeatured={photo.is_featured}
+                      isCurrentCover={isCover}
+                    />
                   </div>
 
                   {/* Favorite Indicator */}

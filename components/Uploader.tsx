@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
+import { refreshGallery } from "@/app/admin/actions"; // <--- Add this!
 
 export default function Uploader({ galleryId }: { galleryId: string }) {
   const [uploading, setUploading] = useState(false);
@@ -68,6 +69,8 @@ export default function Uploader({ galleryId }: { galleryId: string }) {
       }
 
       toast.success("Upload complete!");
+      await refreshGallery(galleryId); 
+
       router.refresh();
     } catch (error: any) {
       console.error("Full Error Object:", error);
