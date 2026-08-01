@@ -7,23 +7,21 @@ export async function createGallery(formData: FormData) {
   const supabase = await createClient();
   const title = formData.get("title") as string;
   const eventDate = formData.get("eventDate") as string;
-  const isPublic = formData.get("isPublic") === "on";
   const password = formData.get("password") as string;
-  const category = formData.get("category") as string;
+  const category = formData.get("category") as string; // GET THE CATEGORY
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "Not logged in" };
 
   const { error } = await supabase.from("galleries").insert([
     {
       title,
       event_date: eventDate || null,
-      is_public: isPublic,
-      photographer_id: user.id,
       password: password || null,
-      category: category || null,
+      category: category || "Lifestyle", // SAVE THE CATEGORY
+      photographer_id: user?.id,
+      is_public: false,
     },
   ]);
 

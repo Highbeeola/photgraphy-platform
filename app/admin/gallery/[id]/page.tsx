@@ -1,3 +1,6 @@
+export const dynamic = "force-dynamic"; // This stops the browser from showing old data
+export const revalidate = 0; // This forces the database to be checked every single time
+
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Uploader from "@/components/Uploader";
@@ -6,8 +9,6 @@ import PublishButton from "@/components/PublishButton";
 import {
   Eye,
   Image as ImageIcon,
-  Settings,
-  Share2,
   ChevronLeft,
   Check,
   Globe,
@@ -18,13 +19,18 @@ import {
 } from "lucide-react";
 import {
   setGalleryCover,
-  updateGallerySettings,
   togglePhotoFeature,
   toggleHeroStatus,
 } from "../../actions";
 import Link from "next/link";
 
-export default async function PixiesetGalleryManager({ params }: any) {
+// FIX 1: Explicitly type params as a Promise for Next.js 16
+export default async function PixiesetGalleryManager({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  // FIX 2: You MUST await params before using id
   const { id } = await params;
   const supabase = await createClient();
 
@@ -33,14 +39,15 @@ export default async function PixiesetGalleryManager({ params }: any) {
     .select("*")
     .eq("id", id)
     .single();
-  const { data: photos } = await supabase
-    .from("photos")
-    .select("*")
-    .eq("gallery_id", id);
 
   if (!gallery) notFound();
 
-  // 1. Fetch favorites for this specific gallery
+  const { data: photos } = await supabase
+    .from("photos")
+    .select("*")
+    .eq("gallery_id", id)
+    .order("created_at", { ascending: true });
+
   const { data: favorites } = await supabase
     .from("favorites")
     .select("photo_id")
@@ -70,7 +77,6 @@ export default async function PixiesetGalleryManager({ params }: any) {
         </div>
 
         <div className="flex-1 overflow-y-auto pb-20 lg:pb-0">
-          {/* Visibility Section */}
           <div className="p-6 bg-slate-50 border-b border-slate-100">
             <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2">
               Visibility
@@ -78,26 +84,25 @@ export default async function PixiesetGalleryManager({ params }: any) {
             {gallery.is_public ? (
               <div className="flex items-center gap-2 text-green-600">
                 <Globe size={14} />
-                <span className="text-xs font-bold uppercase tracking-tight">
+                <span className="text-xs font-bold uppercase">
                   Visible on Portfolio
                 </span>
               </div>
             ) : (
               <div className="flex items-center gap-2 text-slate-400">
                 <Lock size={14} />
-                <span className="text-xs font-bold uppercase tracking-tight">
+                <span className="text-xs font-bold uppercase">
                   Private (Link Only)
                 </span>
               </div>
             )}
           </div>
 
-          {/* Cover Preview Section */}
           <div className="p-6 border-b border-slate-50">
             <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-3">
               Gallery Cover
             </p>
-            <div className="aspect-[3/2] bg-slate-100 rounded-xl overflow-hidden border border-slate-200 relative group">
+            <div className="aspect-[3/2] bg-slate-100 rounded-xl overflow-hidden border border-slate-200 relative">
               {coverUrl ? (
                 <img
                   src={coverUrl}
@@ -106,7 +111,7 @@ export default async function PixiesetGalleryManager({ params }: any) {
                 />
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-2">
-                  <ImageIcon size={24} strokeWidth={1} />
+                  <ImageIcon size={24} />
                   <span className="text-[10px] uppercase font-bold">
                     No Cover
                   </span>
@@ -115,7 +120,6 @@ export default async function PixiesetGalleryManager({ params }: any) {
             </div>
           </div>
 
-          {/* Stats & PIN */}
           <div className="p-6 space-y-6">
             <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
               <p className="text-[10px] uppercase tracking-widest text-blue-400 font-bold mb-1">
@@ -128,16 +132,13 @@ export default async function PixiesetGalleryManager({ params }: any) {
                 </span>
               </div>
             </div>
-
             <div>
               <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">
                 Access PIN
               </p>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-lg font-mono font-bold tracking-widest bg-slate-100 px-4 py-2 rounded-lg border border-slate-200">
-                  {gallery.password || "None"}
-                </span>
-              </div>
+              <span className="text-lg font-mono font-bold tracking-widest bg-slate-100 px-4 py-2 rounded-lg border border-slate-200 mt-2 inline-block">
+                {gallery.password || "None"}
+              </span>
             </div>
           </div>
         </div>
@@ -156,18 +157,14 @@ export default async function PixiesetGalleryManager({ params }: any) {
       {/* 2. MAIN CONTENT AREA */}
       <main className="flex-1 bg-white">
         <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-          <div className="lg:hidden">
-            <span className="font-bold text-xs uppercase tracking-widest">
-              Highlights
-            </span>
-          </div>
-          <div className="hidden lg:block">
-            <h1 className="text-xl font-serif italic">Highlights</h1>
-          </div>
-
-          <div className="flex gap-3">
-            <CopyLinkButton galleryId={id} />
-            <PublishButton galleryId={id} isPublic={gallery.is_public} />
+          <h1 className="text-xl font-serif italic lg:block hidden">
+            Highlights
+          </h1>
+          <div className="flex gap-3 w-full lg:w-auto justify-between lg:justify-end">
+            <div className="flex gap-2">
+              <CopyLinkButton galleryId={id} />
+              <PublishButton galleryId={id} isPublic={gallery.is_public} />
+            </div>
             <Link
               href={`/gallery/${id}`}
               target="_blank"
@@ -181,8 +178,8 @@ export default async function PixiesetGalleryManager({ params }: any) {
         <div className="p-6 space-y-10">
           <Uploader galleryId={id} />
 
-          {/* Photo Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          {/* Photo Grid with Mobile-Friendly Controls */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {photos?.map((photo) => {
               const publicUrl = supabase.storage
                 .from("galleries")
@@ -193,11 +190,7 @@ export default async function PixiesetGalleryManager({ params }: any) {
               return (
                 <div
                   key={photo.id}
-                  className={`group relative aspect-square rounded-2xl overflow-hidden border-2 transition-all ${
-                    isCover
-                      ? "border-blue-500 ring-4 ring-blue-50"
-                      : "border-transparent"
-                  }`}
+                  className={`group relative aspect-square rounded-2xl overflow-hidden border-2 transition-all ${isCover ? "border-blue-500 ring-4 ring-blue-50" : "border-slate-100"}`}
                 >
                   <img
                     src={publicUrl}
@@ -205,9 +198,9 @@ export default async function PixiesetGalleryManager({ params }: any) {
                     alt="Gallery item"
                   />
 
-                  {/* Top-left controls (Hero & Featured Buttons) */}
-                  <div className="absolute top-2 left-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                    {/* HERO TOGGLE (Home Icon) */}
+                  {/* FIXED MOBILE TOOLBAR: Visible on mobile, hover on desktop */}
+                  <div className="absolute inset-x-0 bottom-0 bg-black/60 backdrop-blur-md p-2 flex justify-around items-center translate-y-0 lg:translate-y-full lg:group-hover:translate-y-0 transition-transform duration-300 z-20">
+                    {/* HERO TOGGLE */}
                     <form
                       action={async () => {
                         "use server";
@@ -216,20 +209,16 @@ export default async function PixiesetGalleryManager({ params }: any) {
                     >
                       <button
                         type="submit"
-                        className={`p-2 rounded-full backdrop-blur-md transition ${
-                          photo.is_hero
-                            ? "bg-blue-500 text-white"
-                            : "bg-white/80 text-slate-400 hover:text-blue-500"
-                        }`}
+                        className={`p-1.5 rounded-lg transition ${photo.is_hero ? "text-blue-400" : "text-white/40"}`}
                       >
                         <Home
-                          size={14}
+                          size={18}
                           fill={photo.is_hero ? "currentColor" : "none"}
                         />
                       </button>
                     </form>
 
-                    {/* FEATURED TOGGLE (Star Icon) */}
+                    {/* FEATURED TOGGLE */}
                     <form
                       action={async () => {
                         "use server";
@@ -238,47 +227,37 @@ export default async function PixiesetGalleryManager({ params }: any) {
                     >
                       <button
                         type="submit"
-                        className={`p-2 rounded-full backdrop-blur-md transition ${
-                          photo.is_featured
-                            ? "bg-amber-400 text-white"
-                            : "bg-white/80 text-slate-400 hover:text-amber-500"
-                        }`}
+                        className={`p-1.5 rounded-lg transition ${photo.is_featured ? "text-amber-400" : "text-white/40"}`}
                       >
                         <Star
-                          size={14}
+                          size={18}
                           fill={photo.is_featured ? "currentColor" : "none"}
                         />
                       </button>
                     </form>
+
+                    {/* COVER TOGGLE */}
+                    <form
+                      action={async () => {
+                        "use server";
+                        await setGalleryCover(id, photo.storage_path);
+                      }}
+                    >
+                      <button
+                        type="submit"
+                        className={`p-1.5 rounded-lg transition ${isCover ? "text-green-400" : "text-white/40"}`}
+                      >
+                        <ImageIcon size={18} />
+                      </button>
+                    </form>
                   </div>
 
+                  {/* Favorite Indicator */}
                   {isFavorited && (
-                    <div className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-full shadow-sm z-10">
-                      <Heart size={12} className="text-red-500 fill-red-500" />
+                    <div className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-full shadow-sm z-10 animate-in zoom-in">
+                      <Heart size={10} className="text-red-500 fill-red-500" />
                     </div>
                   )}
-
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    {isCover ? (
-                      <div className="bg-blue-500 text-white p-2 rounded-full">
-                        <Check size={20} />
-                      </div>
-                    ) : (
-                      <form
-                        action={async () => {
-                          "use server";
-                          await setGalleryCover(id, photo.storage_path);
-                        }}
-                      >
-                        <button
-                          type="submit"
-                          className="bg-white text-black px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest hover:scale-110 transition cursor-pointer"
-                        >
-                          Set as Cover
-                        </button>
-                      </form>
-                    )}
-                  </div>
                 </div>
               );
             })}
