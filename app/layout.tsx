@@ -16,13 +16,35 @@ const sans = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Dara Pixel | Fine Art Photography",
-  description: "Capturing the raw, unscripted beauty of human connection.",
+  title: {
+    default: "Dara Pixel | Fine Art Photography",
+    template: "%s | Dara Pixel",
+  },
+  description:
+    "Capturing the raw, unscripted beauty of human connection in Lagos and worldwide.",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+    // This tells Android where to find the high-res icons
+    other: [
+      {
+        rel: "icon",
+        type: "image/png",
+        sizes: "192x192",
+        url: "/android-chrome-192x192.png",
+      },
+    ],
+  },
   openGraph: {
-    images: ["/logo.png"], // This makes the logo show up on WhatsApp/Instagram links
+    title: "Dara Pixel Photography",
+    description: "Lifestyle and editorial photography.",
+    url: "https://darapixel.vercel.app",
+    siteName: "Dara Pixel",
+    images: [{ url: "/logo.png" }],
+    type: "website",
   },
 };
-
 // 2. Fix the 'any' error by defining the type here
 export default function RootLayout({
   children,
