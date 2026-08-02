@@ -17,7 +17,6 @@ export default function AdminLayout({
   // We've removed Clients and Bookings to focus on the core: Galleries
   const navItems = [
     { label: "Galleries", href: "/admin", icon: LayoutDashboard },
-    { label: "Settings", href: "/admin/settings", icon: Settings },
   ];
 
   return (

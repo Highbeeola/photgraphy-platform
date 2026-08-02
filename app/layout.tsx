@@ -22,8 +22,17 @@ export const metadata: Metadata = {
   },
   description:
     "Capturing the raw, unscripted beauty of human connection in Lagos and worldwide.",
+  appleWebApp: {
+    title: "Dara Pixel", // This fixes the 'jampacked' text on iPhones
+    statusBarStyle: "default",
+    capable: true,
+  },
   icons: {
-    icon: "/favicon.ico",
+    icon: [
+      { url: "/favicon.ico" }, // Standard
+      { url: "/favicon.ico", media: "(prefers-color-scheme: light)" },
+      { url: "/favicon.ico", media: "(prefers-color-scheme: dark)" },
+    ],
     shortcut: "/favicon.ico",
     apple: "/apple-touch-icon.png",
     // This tells Android where to find the high-res icons
@@ -45,6 +54,7 @@ export const metadata: Metadata = {
     type: "website",
   },
 };
+
 // 2. Fix the 'any' error by defining the type here
 export default function RootLayout({
   children,
