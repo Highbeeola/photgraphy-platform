@@ -159,13 +159,15 @@ export default async function HomePage() {
       {/* --- 6. FOOTER --- */}
       <footer className="py-20 flex flex-col items-center gap-10 bg-white">
         <div className="flex flex-wrap justify-center gap-10 md:gap-12 text-slate-300 px-6">
-          {/* <a
-            href="https://instagram.com/..."
-            target="_blank"
-            className="hover:text-black transition"
-          >
-            <FaInstagram size={22} />
-          </a> */}
+          {
+            <a
+              href="https://www.instagram.com/dara_pixel?igsh=MWVidnBhZml2dm5ydA%3D%3D&utm_source=qr"
+              target="_blank"
+              className="hover:text-black transition"
+            >
+              <FaInstagram size={22} />
+            </a>
+          }
           <a
             href="https://www.tiktok.com/@dara.pixel1?_r=1&_t=ZS-98XuQErCwIU"
             target="_blank"

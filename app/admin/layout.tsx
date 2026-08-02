@@ -73,26 +73,25 @@ export default function AdminLayout({
       </main>
 
       {/* --- MOBILE BOTTOM NAV (Simplified) --- */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-lg border-t border-slate-200 px-8 py-3 flex justify-between items-center z-50 shadow-lg">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-lg border-t border-slate-100 px-6 py-4 flex justify-center gap-20 z-50 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]">
         {navItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
             className="flex flex-col items-center gap-1 text-slate-400 hover:text-black transition-colors"
           >
-            <item.icon size={20} />
-            <span className="text-[10px] font-bold uppercase tracking-widest">
+            <item.icon size={22} />
+            <span className="text-[9px] font-black uppercase tracking-widest">
               {item.label}
             </span>
           </Link>
         ))}
-        {/* Mobile View Site Link */}
         <Link
-          href="/"
+          href="/portfolio"
           className="flex flex-col items-center gap-1 text-slate-400"
         >
-          <Globe size={20} />
-          <span className="text-[10px] font-bold uppercase tracking-widest">
+          <Globe size={22} />
+          <span className="text-[9px] font-black uppercase tracking-widest">
             Site
           </span>
         </Link>

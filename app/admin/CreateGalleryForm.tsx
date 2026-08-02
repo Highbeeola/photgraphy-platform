@@ -39,7 +39,7 @@ export default function CreateGalleryForm() {
           <input
             name="title"
             placeholder="e.g. The Smith Wedding"
-            className="w-full h-14 p-4 border border-slate-200 rounded-2xl bg-slate-50/50 outline-none focus:ring-2 focus:ring-black transition-all"
+            className="w-full h-12 px-4 border border-slate-200 rounded-2xl bg-white outline-none focus:ring-1 focus:ring-black transition-all"
             required
           />
         </div>
@@ -52,7 +52,7 @@ export default function CreateGalleryForm() {
           <input
             name="eventDate"
             type="date"
-            className="w-full h-14 p-4 border border-slate-200 rounded-2xl bg-slate-50/50 outline-none focus:ring-2 focus:ring-black transition-all"
+            className="w-full h-12 px-4 border border-slate-200 rounded-2xl bg-white outline-none focus:ring-1 focus:ring-black transition-all appearance-none flex items-center text-sm"
           />
         </div>
 
@@ -64,7 +64,7 @@ export default function CreateGalleryForm() {
           <input
             name="password"
             placeholder="0000"
-            className="w-full h-14 p-4 border border-slate-200 rounded-2xl bg-slate-50/50 outline-none focus:ring-2 focus:ring-black transition-all text-center font-mono"
+            className="w-full h-12 px-4 border border-slate-200 rounded-2xl bg-white outline-none focus:ring-1 focus:ring-black transition-all text-center font-mono"
           />
         </div>
 
@@ -77,7 +77,7 @@ export default function CreateGalleryForm() {
             name="category"
             list="category-suggestions"
             defaultValue="Lifestyle"
-            className="w-full h-14 p-4 border border-slate-200 rounded-2xl bg-slate-50/50 outline-none focus:ring-2 focus:ring-black transition-all"
+            className="w-full h-12 px-4 border border-slate-200 rounded-2xl bg-white outline-none focus:ring-1 focus:ring-black transition-all"
           />
           <datalist id="category-suggestions">
             <option value="Lifestyle" />
