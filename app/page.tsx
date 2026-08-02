@@ -1,3 +1,6 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { signOut } from "@/app/auth/actions";
@@ -12,8 +15,17 @@ export default async function HomePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Determine user role for smart navigation link
-  const isPhotographer = user?.user_metadata?.role === "photographer";
+  // Fetch role from 'users' table if user exists
+  let isPhotographer = false;
+  if (user) {
+    const { data: profile } = await supabase
+      .from("users")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    isPhotographer = profile?.role === "photographer";
+  }
 
   // 1. Fetch Carousel Images (using the is_hero logic)
   const { data: heroPhotos, error: heroError } = await supabase
@@ -102,7 +114,12 @@ export default async function HomePage() {
           </header>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-12">
-            {featuredPhotos?.map((photo) => {
+            {/* We use a Map to ensure we only show unique storage paths */}
+            {Array.from(
+              new Map(
+                featuredPhotos?.map((item) => [item.storage_path, item]),
+              ).values(),
+            ).map((photo: any) => {
               const url = supabase.storage
                 .from("galleries")
                 .getPublicUrl(photo.storage_path).data.publicUrl;
@@ -142,22 +159,22 @@ export default async function HomePage() {
       {/* --- 6. FOOTER --- */}
       <footer className="py-20 flex flex-col items-center gap-10 bg-white">
         <div className="flex flex-wrap justify-center gap-10 md:gap-12 text-slate-300 px-6">
-          <a
+          {/* <a
             href="https://instagram.com/..."
             target="_blank"
             className="hover:text-black transition"
           >
             <FaInstagram size={22} />
-          </a>
+          </a> */}
           <a
-            href="https://tiktok.com/..."
+            href="https://www.tiktok.com/@dara.pixel1?_r=1&_t=ZS-98XuQErCwIU"
             target="_blank"
             className="hover:text-black transition"
           >
             <FaTiktok size={22} />
           </a>
           <a
-            href="https://snapchat.com/add/..."
+            href="https://snapchat.com/t/Dz1au16A"
             target="_blank"
             className="hover:text-yellow-400 transition"
           >

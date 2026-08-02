@@ -25,7 +25,6 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
 
-    // Sign In
     const { data, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -37,18 +36,19 @@ export default function LoginPage() {
       return;
     }
 
-    // Fetch Role
+    // 1. Fetch fresh role from DB
     const { data: profile } = await supabase
       .from("users")
       .select("role")
       .eq("id", data.user.id)
       .single();
-
-    // Redirect based on role (No more alerts!)
+   
+    // 2. THE NUCLEAR REDIRECT
+    // window.location.replace is the only way to kill the 'Client Archive' cache
     if (profile?.role === "photographer") {
-      window.location.assign("/admin");
+      window.location.replace("/admin");
     } else {
-      window.location.assign("/portal");
+      window.location.replace("/portal");
     }
   };
   const handleGoogleLogin = async () => {

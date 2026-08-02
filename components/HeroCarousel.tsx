@@ -28,7 +28,7 @@ export default function HeroCarousel({ photos }: HeroCarouselProps) {
   }
 
   return (
-    <div className="relative w-full h-[70vh] md:h-[calc(100vh-120px)] overflow-hidden bg-white rounded-sm shadow-sm">
+    <div className="relative w-full h-[85vh] md:h-[95vh] overflow-hidden bg-white rounded-sm shadow-sm">
       {photos.map((photo, index) => (
         <div
           key={index}

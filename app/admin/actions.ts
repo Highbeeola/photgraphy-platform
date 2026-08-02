@@ -118,6 +118,8 @@ export async function updateGallerySettings(
   revalidatePath("/portfolio");
   return { success: true };
 }
+// app/admin/actions.ts
+
 export async function togglePhotoFeature(photoId: string, isFeatured: boolean) {
   const supabase = await createClient();
   const { error } = await supabase
@@ -126,9 +128,14 @@ export async function togglePhotoFeature(photoId: string, isFeatured: boolean) {
     .eq("id", photoId);
 
   if (error) return { error: error.message };
-  revalidatePath("/"); // Refresh homepage
+
+  // This is the critical part - we clear EVERY cache path
+  revalidatePath("/");
+  revalidatePath("/portfolio");
+  revalidatePath("/admin");
   return { success: true };
 }
+
 export async function toggleHeroStatus(photoId: string, isHero: boolean) {
   const supabase = await createClient();
   const { error } = await supabase
@@ -137,7 +144,9 @@ export async function toggleHeroStatus(photoId: string, isHero: boolean) {
     .eq("id", photoId);
 
   if (error) return { error: error.message };
+
   revalidatePath("/");
+  revalidatePath("/admin");
   return { success: true };
 }
 export async function refreshGallery(id: string) {

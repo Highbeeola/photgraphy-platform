@@ -200,7 +200,7 @@ export default async function PixiesetGalleryManager({
                     alt="Gallery item"
                   />
 
-                  <div className="absolute inset-x-0 bottom-0 bg-black/80 backdrop-blur-md h-12 flex items-center justify-center z-20 translate-y-0 lg:translate-y-full lg:group-hover:translate-y-0 transition-transform duration-300">
+                  <div className="absolute inset-x-0 bottom-0 bg-black/80 backdrop-blur-md h-12 flex items-center z-20 lg:translate-y-full lg:group-hover:translate-y-0 transition-transform duration-300">
                     <AdminPhotoControls
                       photoId={photo.id}
                       galleryId={id}

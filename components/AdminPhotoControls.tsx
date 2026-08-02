@@ -28,49 +28,87 @@ export default function AdminPhotoControls({
   const [isFeatured, setIsFeatured] = useState(initialIsFeatured);
   const [isPending, startTransition] = useTransition();
 
-  const handleAction = (fn: any, stateSetter?: any, newState?: any) => {
+  const handleAction = (
+    fn: any,
+    stateSetter?: any,
+    newState?: any,
+    actionName?: string,
+  ) => {
     if (stateSetter) stateSetter(newState);
     startTransition(async () => {
       const res = await fn;
-      if (res?.error) toast.error(res.error);
+      if (res?.error) {
+        toast.error(res.error);
+      } else if (actionName) {
+        // Professional feedback for mobile users
+        toast.success(actionName, { duration: 2000 });
+      }
     });
   };
 
   return (
-    <div className="flex items-center justify-center gap-2 w-full h-full">
-      {/* 1. HERO (Home Icon) */}
+    <div className="flex items-center w-full h-full">
+      {/* 1. HERO */}
       <button
         onClick={() =>
-          handleAction(toggleHeroStatus(photoId, !isHero), setIsHero, !isHero)
+          handleAction(
+            toggleHeroStatus(photoId, !isHero),
+            setIsHero,
+            !isHero,
+            isHero ? "Removed from Carousel" : "Added to Carousel",
+          )
         }
         disabled={isPending}
-        className={`w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90 ${isHero ? "text-blue-400 bg-blue-500/20" : "text-white/40 hover:text-white"}`}
+        title="Display in Home Carousel"
+        className={`flex-1 flex justify-center items-center h-full transition-colors ${
+          isHero
+            ? "text-blue-400 bg-blue-500/10"
+            : "text-white/30 hover:text-white"
+        }`}
       >
-        <Home size={16} fill={isHero ? "currentColor" : "none"} />
+        <Home size={18} fill={isHero ? "currentColor" : "none"} />
       </button>
 
-      {/* 2. FEATURED (Star Icon) */}
+      {/* 2. FEATURED */}
       <button
         onClick={() =>
           handleAction(
             togglePhotoFeature(photoId, !isFeatured),
             setIsFeatured,
             !isFeatured,
+            isFeatured ? "Removed from Featured" : "Added to Featured",
           )
         }
         disabled={isPending}
-        className={`w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90 ${isFeatured ? "text-amber-400 bg-amber-500/20" : "text-white/40 hover:text-white"}`}
+        title="Feature on Homepage"
+        className={`flex-1 flex justify-center items-center h-full border-x border-white/10 transition-colors ${
+          isFeatured
+            ? "text-amber-400 bg-amber-500/10"
+            : "text-white/30 hover:text-white"
+        }`}
       >
-        <Star size={16} fill={isFeatured ? "currentColor" : "none"} />
+        <Star size={18} fill={isFeatured ? "currentColor" : "none"} />
       </button>
 
-      {/* 3. COVER (Image Icon) */}
+      {/* 3. COVER */}
       <button
-        onClick={() => handleAction(setGalleryCover(galleryId, storagePath))}
+        onClick={() =>
+          handleAction(
+            setGalleryCover(galleryId, storagePath),
+            null,
+            null,
+            "Set as Gallery Cover",
+          )
+        }
         disabled={isPending}
-        className={`w-9 h-9 flex items-center justify-center rounded-full transition-all active:scale-90 ${isCurrentCover ? "text-green-400 bg-green-500/20" : "text-white/40 hover:text-white"}`}
+        title="Set as Main Cover"
+        className={`flex-1 flex justify-center items-center h-full transition-colors ${
+          isCurrentCover
+            ? "text-green-400 bg-green-500/10"
+            : "text-white/30 hover:text-white"
+        }`}
       >
-        <ImageIcon size={16} />
+        <ImageIcon size={18} />
       </button>
     </div>
   );

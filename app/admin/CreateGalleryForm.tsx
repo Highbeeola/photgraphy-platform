@@ -21,82 +21,82 @@ export default function CreateGalleryForm() {
   }
 
   return (
-    <section className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-      <h2 className="text-xl font-bold mb-4 text-slate-800">
-        Create New Gallery
+    <section className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+      <h2 className="text-xl font-bold mb-8 text-slate-800 tracking-tight">
+        Create New Collection
       </h2>
 
       <form
         ref={formRef}
         action={handleSubmit}
-        className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end"
+        className="grid grid-cols-1 md:grid-cols-12 gap-y-6 gap-x-4 items-end"
       >
-        <div className="md:col-span-2 space-y-2">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">
+        {/* Title: 4 columns */}
+        <div className="md:col-span-4 space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-[.2em] text-slate-400 ml-1">
             Gallery Title
           </label>
           <input
             name="title"
             placeholder="e.g. The Smith Wedding"
-            className="w-full p-3 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full h-14 p-4 border border-slate-200 rounded-2xl bg-slate-50/50 outline-none focus:ring-2 focus:ring-black transition-all"
             required
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">
-            Date
+        {/* Date: 3 columns */}
+        <div className="md:col-span-3 space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-[.2em] text-slate-400 ml-1">
+            Event Date
           </label>
           <input
             name="eventDate"
             type="date"
-            className="w-full p-3 border border-slate-200 rounded-xl outline-none"
+            className="w-full h-14 p-4 border border-slate-200 rounded-2xl bg-slate-50/50 outline-none focus:ring-2 focus:ring-black transition-all"
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">
-            Access PIN (Optional)
+        {/* PIN: 2 columns */}
+        <div className="md:col-span-2 space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-[.2em] text-slate-400 ml-1">
+            Access PIN
           </label>
           <input
             name="password"
-            placeholder="e.g. 1234"
-            className="w-full p-3 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-500 transition"
+            placeholder="0000"
+            className="w-full h-14 p-4 border border-slate-200 rounded-2xl bg-slate-50/50 outline-none focus:ring-2 focus:ring-black transition-all text-center font-mono"
           />
         </div>
 
-        <div className="space-y-2">
-          <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-1">
+        {/* Category: 3 columns */}
+        <div className="md:col-span-3 space-y-2">
+          <label className="text-[10px] font-black uppercase tracking-[.2em] text-slate-400 ml-1">
             Category
           </label>
-
-          {/* The Input links to the datalist via the "list" attribute */}
           <input
             name="category"
             list="category-suggestions"
-            placeholder="Select or type custom..."
-            defaultValue="Lifestyle" // Defaults to Lifestyle so he doesn't have to touch it if he doesn't want to!
-            className="w-full p-3 border border-slate-200 rounded-xl bg-white outline-none focus:ring-2 focus:ring-black transition"
+            defaultValue="Lifestyle"
+            className="w-full h-14 p-4 border border-slate-200 rounded-2xl bg-slate-50/50 outline-none focus:ring-2 focus:ring-black transition-all"
           />
-
-          {/* The Suggestions (He can pick these, or just type his own!) */}
           <datalist id="category-suggestions">
             <option value="Lifestyle" />
             <option value="Wedding" />
             <option value="Portrait" />
-            <option value="Editorial" />
-            <option value="Birthday" />
             <option value="Event" />
           </datalist>
         </div>
 
-        <button
-          type="submit"
-          disabled={isPending}
-          className="w-full bg-black text-white h-[50px] rounded-xl font-bold text-sm hover:bg-slate-800 transition active:scale-95"
-        >
-          {isPending ? "Creating..." : "Create"}
-        </button>
+        {/* Submit Button: Full width on mobile, right-aligned on desktop */}
+        <div className="md:col-span-12 flex justify-end mt-4">
+          <button
+            type="submit"
+            disabled={isPending}
+            className="w-full md:w-auto px-12 h-14 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] hover:bg-black transition-all active:scale-95 shadow-xl disabled:opacity-50"
+          >
+            {isPending ? "Creating..." : "Create Collection"}
+          </button>
+        </div>
       </form>
     </section>
   );
