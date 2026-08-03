@@ -195,7 +195,7 @@ export default async function HomePage() {
             >
               ©
             </Link>{" "}
-            Dara Pixel 2024
+            Dara Pixel 2026
           </p>
           {user && (
             <form action={signOut}>

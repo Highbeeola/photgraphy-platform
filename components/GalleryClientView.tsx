@@ -88,16 +88,16 @@ export default function GalleryView({
           {photos.map((photo, index) => (
             <div
               key={photo.id}
-              className="relative group break-inside-avoid rounded-sm overflow-hidden bg-slate-50"
+              onClick={() => setCurrentIndex(index)}
+              className="relative group break-inside-avoid rounded-sm overflow-hidden bg-slate-50 cursor-zoom-in"
             >
               <img
                 src={photo.url}
-                className="w-full h-auto cursor-zoom-in hover:opacity-90 transition duration-500"
-                onClick={() => setCurrentIndex(index)}
+                className="w-full h-auto hover:opacity-90 transition duration-500 select-none pointer-events-none"
                 loading="lazy"
                 alt=""
               />
-              <div className="absolute top-2 right-2 md:opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute top-2 right-2 md:opacity-0 group-hover:opacity-100 transition-opacity z-10">
                 <FavoriteButton
                   photoId={photo.id}
                   galleryId={gallery.id}
@@ -143,7 +143,7 @@ export default function GalleryView({
           >
             <img
               src={photos[currentIndex].url}
-              className="max-w-full max-h-[75vh] object-contain shadow-2xl rounded-sm"
+              className="max-w-full max-h-[75vh] object-contain shadow-2xl rounded-sm pointer-events-auto"
               alt=""
             />
 

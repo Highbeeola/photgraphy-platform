@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     "Capturing the raw, unscripted beauty of human connection in Lagos and worldwide.",
   appleWebApp: {
     title: "Dara Pixel", // This fixes the 'jampacked' text on iPhones
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
     capable: true,
   },
   icons: {
@@ -50,7 +50,11 @@ export const metadata: Metadata = {
     description: "Lifestyle and editorial photography.",
     url: "https://darapixel.vercel.app",
     siteName: "Dara Pixel",
-    images: [{ url: "/logo.png" }],
+    images: [
+      {
+        url: "https://orcxzxbkciebsifelctj.supabase.co/storage/v1/object/public/galleries/ChatGPT%20Image%20Aug%202,%202026%20at%2002_43_18%20PM.png",
+      },
+    ],
     type: "website",
   },
 };

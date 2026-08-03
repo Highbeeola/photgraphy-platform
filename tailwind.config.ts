@@ -17,6 +17,15 @@ const config: Config = {
         widest: ".3em",
         extra: ".5em",
       },
+      keyframes: {
+        reveal: {
+          "0%": { filter: "blur(12px)", opacity: "0" },
+          "100%": { filter: "blur(0)", opacity: "1" },
+        },
+      },
+      animation: {
+        reveal: "reveal 1.5s ease-in-out",
+      },
     },
   },
   plugins: [],
