@@ -43,9 +43,6 @@ export default async function PixiesetGalleryManager({
     .eq("gallery_id", id)
     .order("created_at", { ascending: true });
 
-  // Terminal logging to trace DB fetching
-  console.log("Photos found in DB:", photos?.length);
-
   const { data: favorites } = await supabase
     .from("favorites")
     .select("photo_id")
@@ -176,51 +173,68 @@ export default async function PixiesetGalleryManager({
         <div className="p-6 space-y-10">
           <Uploader galleryId={id} />
 
-          {/* Photo Grid with Mobile-Friendly Controls */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {photos?.map((photo) => {
-              const publicUrl = supabase.storage
-                .from("galleries")
-                .getPublicUrl(photo.storage_path).data.publicUrl;
-              const isCover = gallery.cover_image_path === photo.storage_path;
-              const isFavorited = favoriteIds.has(photo.id);
+          {/* Photo Grid with Mobile-Friendly Controls or Empty State */}
+          {photos?.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 border-2 border-dashed border-slate-100 rounded-3xl">
+              <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-300 mb-4">
+                <ImageIcon size={32} strokeWidth={1} />
+              </div>
+              <p className="text-sm font-serif italic text-slate-400">
+                Your collection is empty.
+              </p>
+              <p className="text-[10px] uppercase tracking-widest text-slate-300 mt-1">
+                Upload your first highlights above
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+              {photos?.map((photo) => {
+                const publicUrl = supabase.storage
+                  .from("galleries")
+                  .getPublicUrl(photo.storage_path).data.publicUrl;
+                const isCover = gallery.cover_image_path === photo.storage_path;
+                const isFavorited = favoriteIds.has(photo.id);
 
-              return (
-                <div
-                  key={photo.id}
-                  className={`group relative aspect-square rounded-2xl overflow-hidden border-2 transition-all ${
-                    isCover
-                      ? "border-blue-500 ring-4 ring-blue-50"
-                      : "border-slate-100"
-                  }`}
-                >
-                  <img
-                    src={publicUrl}
-                    className="object-cover w-full h-full"
-                    alt="Gallery item"
-                  />
-
-                  <div className="absolute inset-x-0 bottom-0 bg-black/80 backdrop-blur-md h-12 flex items-center z-20 lg:translate-y-full lg:group-hover:translate-y-0 transition-transform duration-300">
-                    <AdminPhotoControls
-                      photoId={photo.id}
-                      galleryId={id}
-                      storagePath={photo.storage_path}
-                      initialIsHero={photo.is_hero}
-                      initialIsFeatured={photo.is_featured}
-                      isCurrentCover={isCover}
+                return (
+                  <div
+                    key={photo.id}
+                    className={`group relative aspect-square rounded-2xl overflow-hidden border-2 transition-all ${
+                      isCover
+                        ? "border-blue-500 ring-4 ring-blue-50"
+                        : "border-slate-100"
+                    }`}
+                  >
+                    <img
+                      src={publicUrl}
+                      className="object-cover w-full h-full"
+                      alt="Gallery item"
                     />
-                  </div>
 
-                  {/* Favorite Indicator */}
-                  {isFavorited && (
-                    <div className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-full shadow-sm z-10 animate-in zoom-in">
-                      <Heart size={10} className="text-red-500 fill-red-500" />
+                    <div className="absolute inset-x-0 bottom-0 bg-black/80 backdrop-blur-md h-12 flex items-center z-20 lg:translate-y-full lg:group-hover:translate-y-0 transition-transform duration-300">
+                      <AdminPhotoControls
+                        photoId={photo.id}
+                        galleryId={id}
+                        storagePath={photo.storage_path}
+                        initialIsHero={photo.is_hero}
+                        initialIsFeatured={photo.is_featured}
+                        isCurrentCover={isCover}
+                      />
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
+
+                    {/* Favorite Indicator */}
+                    {isFavorited && (
+                      <div className="absolute top-2 right-2 bg-white/90 p-1.5 rounded-full shadow-sm z-10 animate-in zoom-in">
+                        <Heart
+                          size={10}
+                          className="text-red-500 fill-red-500"
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </main>
     </div>

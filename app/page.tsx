@@ -42,9 +42,6 @@ export default async function HomePage() {
     .eq("galleries.is_public", true)
     .limit(9);
 
-  // LOG TO TERMINAL TO SEE IF IT'S WORKING
-  console.log("Carousel Photos found:", heroPhotos?.length);
-
   // Transform for Carousel
   const heroImages =
     heroPhotos?.map((p) => ({

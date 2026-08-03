@@ -1,5 +1,7 @@
 // app/admin/layout.tsx
 import { signOut } from "@/app/auth/actions";
+import { createClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
 import {
   LayoutDashboard,
   Settings,
@@ -9,11 +11,30 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // 1. If not logged in at all, go to login
+  if (!user) redirect("/login");
+
+  // 2. Fetch role to ensure it's Dara (Photographer)
+  const { data: profile } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role !== "photographer") {
+    redirect("/portal"); // Send clients to the portal, not admin
+  }
+
   // We've removed Clients and Bookings to focus on the core: Galleries
   const navItems = [
     { label: "Galleries", href: "/admin", icon: LayoutDashboard },

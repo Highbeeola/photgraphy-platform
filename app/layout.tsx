@@ -63,8 +63,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${serif.variable} ${sans.variable}`}>
-      <body className="antialiased font-sans">
-        {children}
+      <body className={`${serif.variable} ${sans.variable} antialiased`}>
+        <div className="animate-in fade-in duration-1000 ease-in-out">
+          {children}
+        </div>
         <Toaster position="top-center" richColors />
       </body>
     </html>
