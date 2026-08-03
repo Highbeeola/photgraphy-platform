@@ -7,6 +7,7 @@ import Uploader from "@/components/Uploader";
 import CopyLinkButton from "@/components/CopyLinkButton";
 import PublishButton from "@/components/PublishButton";
 import AdminPhotoControls from "@/components/AdminPhotoControls";
+import SmartImage from "@/components/SmartImage";
 import {
   Eye,
   Image as ImageIcon,
@@ -204,12 +205,10 @@ export default async function PixiesetGalleryManager({
                         : "border-slate-100"
                     }`}
                   >
-                    <img
-                      src={publicUrl}
-                      className="object-cover w-full h-full"
-                      alt="Gallery item"
-                    />
+                    {/* SmartImage Component */}
+                    <SmartImage src={publicUrl} alt="Gallery item" />
 
+                    {/* Toolbar Overlay */}
                     <div className="absolute inset-x-0 bottom-0 bg-black/80 backdrop-blur-md h-12 flex items-center z-20 lg:translate-y-full lg:group-hover:translate-y-0 transition-transform duration-300">
                       <AdminPhotoControls
                         photoId={photo.id}

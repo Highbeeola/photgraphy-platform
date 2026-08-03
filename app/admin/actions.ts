@@ -155,3 +155,21 @@ export async function refreshGallery(id: string) {
   revalidatePath(`/gallery/${id}`);
   revalidatePath(`/portfolio`);
 }
+export async function deletePhoto(
+  photoId: string,
+  storagePath: string,
+  galleryId: string,
+) {
+  const supabase = await createClient();
+
+  // 1. Delete from Supabase Storage
+  await supabase.storage.from("galleries").remove([storagePath]);
+
+  // 2. Delete from Database
+  const { error } = await supabase.from("photos").delete().eq("id", photoId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/admin/gallery/${galleryId}`);
+  return { success: true };
+}

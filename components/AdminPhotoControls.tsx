@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Home, Star, Image as ImageIcon } from "lucide-react";
+import { Home, Star, Image as ImageIcon, Trash2 } from "lucide-react";
 import {
   toggleHeroStatus,
   togglePhotoFeature,
   setGalleryCover,
+  deletePhoto,
 } from "@/app/admin/actions";
 import { toast } from "sonner";
 
@@ -102,13 +103,32 @@ export default function AdminPhotoControls({
         }
         disabled={isPending}
         title="Set as Main Cover"
-        className={`flex-1 flex justify-center items-center h-full transition-colors ${
+        className={`flex-1 flex justify-center items-center h-full border-r border-white/10 transition-colors ${
           isCurrentCover
             ? "text-green-400 bg-green-500/10"
             : "text-white/30 hover:text-white"
         }`}
       >
         <ImageIcon size={18} />
+      </button>
+
+      {/* 4. DELETE */}
+      <button
+        onClick={() => {
+          if (confirm("Delete this photo permanently?")) {
+            handleAction(
+              deletePhoto(photoId, storagePath, galleryId),
+              null,
+              null,
+              "Photo Deleted",
+            );
+          }
+        }}
+        disabled={isPending}
+        title="Delete Photo"
+        className="flex-1 flex justify-center items-center h-full transition-colors text-white/30 hover:text-red-500 hover:bg-red-500/10 active:scale-90"
+      >
+        <Trash2 size={16} />
       </button>
     </div>
   );
