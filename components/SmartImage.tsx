@@ -2,18 +2,24 @@
 
 import { useState } from "react";
 
-export default function SmartImage({
-  src,
-  alt,
-}: {
+interface SmartImageProps {
   src: string;
   alt?: string;
-}) {
+  width?: number;
+}
+
+export default function SmartImage({ src, alt }: SmartImageProps) {
   const [loaded, setLoaded] = useState(false);
+
+  // Grid thumbnails should be smaller to save bandwidth
+  const optimizedSrc = src.replace(
+    "/upload/",
+    `/upload/w_800,c_scale,q_auto,f_auto/`,
+  );
 
   return (
     <img
-      src={src}
+      src={optimizedSrc}
       alt={alt || "Gallery Image"}
       loading="lazy"
       onLoad={() => setLoaded(true)}

@@ -3,6 +3,23 @@ import { notFound } from "next/navigation";
 import GalleryClientView from "@/components/GalleryClientView";
 import GalleryPasswordGateway from "@/components/GalleryPasswordGateway";
 
+export async function generateMetadata({ params }: any) {
+  const { id } = await params;
+  const supabase = await createClient();
+  const { data: gallery } = await supabase
+    .from("galleries")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  return {
+    title: `${gallery?.title} | Dara Pixel`,
+    openGraph: {
+      images: [gallery?.cover_image_path || "/logo.png"], // Shows the specific wedding cover on WhatsApp!
+    },
+  };
+}
+
 export default async function ClientGalleryPage({ params, searchParams }: any) {
   const { id } = await params;
   const { pw } = await searchParams;

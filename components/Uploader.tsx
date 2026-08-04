@@ -17,6 +17,11 @@ export default function Uploader({ galleryId }: { galleryId: string }) {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset =
+      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET ||
+      "your_unsigned_preset";
+
     setUploading(true);
     let completed = 0;
 
@@ -25,47 +30,47 @@ export default function Uploader({ galleryId }: { galleryId: string }) {
         // Delay between uploads to give mobile connections breathing room
         await new Promise((resolve) => setTimeout(resolve, 500));
 
-        // 1. Create a unique path
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `${galleryId}/${fileName}`;
+        // 1. Prepare Cloudinary FormData
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("upload_preset", uploadPreset);
 
-        const uploadOptions = {
-          cacheControl: "3600",
-          upsert: false, // Prevents accidental overwrites
-          contentType: file.type,
-        };
+        // 2. Direct upload to Cloudinary (with 1 retry)
+        let res = await fetch(
+          `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+          {
+            method: "POST",
+            body: formData,
+          },
+        );
 
-        // 2. Upload with 1-time retry on failure
-        let { error: uploadError } = await supabase.storage
-          .from("galleries")
-          .upload(filePath, file, uploadOptions);
-
-        if (uploadError) {
-          console.warn(
-            "Upload failed, attempting 1-time retry...",
-            uploadError,
-          );
-
-          // Wait 1 second before retrying
+        if (!res.ok) {
+          console.warn("Cloudinary upload failed, attempting 1-time retry...");
           await new Promise((resolve) => setTimeout(resolve, 1000));
-
-          const retryResult = await supabase.storage
-            .from("galleries")
-            .upload(filePath, file, uploadOptions);
-
-          uploadError = retryResult.error;
+          res = await fetch(
+            `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+            {
+              method: "POST",
+              body: formData,
+            },
+          );
         }
 
-        if (uploadError) {
-          console.error("Storage Error Detail:", uploadError);
-          throw uploadError;
+        if (!res.ok) {
+          const errorData = await res.json();
+          console.error("Cloudinary Error Detail:", errorData);
+          throw new Error(
+            errorData?.error?.message || "Cloudinary upload failed",
+          );
         }
 
-        // 3. Database Insert
+        const data = await res.json();
+        const cloudinaryUrl = data.secure_url;
+
+        // 3. Save Cloudinary URL into Supabase
         const { error: dbError } = await supabase.from("photos").insert({
           gallery_id: galleryId,
-          storage_path: filePath,
+          storage_path: cloudinaryUrl, // Full Cloudinary URL saved
         });
 
         if (dbError) throw dbError;
@@ -80,7 +85,9 @@ export default function Uploader({ galleryId }: { galleryId: string }) {
       window.location.reload(); // Force hard refresh to see new images
     } catch (error: any) {
       console.error("Full Error Object:", error);
-      toast.error("Upload paused. Check your connection.");
+      toast.error(
+        "Upload paused. Check your connection or Cloudinary preset settings.",
+      );
     } finally {
       setUploading(false);
       setProgress(0);

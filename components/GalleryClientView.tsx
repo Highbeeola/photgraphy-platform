@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { X, Download, ChevronLeft, ChevronRight } from "lucide-react";
 import FavoriteButton from "@/components/FavoriteButton";
+import SmartImage from "@/components/SmartImage";
 
 interface Gallery {
   id: string;
@@ -60,16 +61,22 @@ export default function GalleryView({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [currentIndex]);
 
-  const handleDownload = async (url: string) => {
-    const res = await fetch(url);
-    const blob = await res.blob();
-    const blobUrl = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = blobUrl;
-    a.download = `${gallery.title.replace(/\s+/g, "-")}-${(currentIndex ?? 0) + 1}.jpg`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+  const handleDownload = async (originalUrl: string) => {
+    try {
+      // Fetch original URL directly without transformation flags
+      const res = await fetch(originalUrl);
+      const blob = await res.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `${gallery.title.replace(/\s+/g, "-")}-${(currentIndex ?? 0) + 1}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Failed to download image:", error);
+    }
   };
 
   return (
@@ -91,12 +98,9 @@ export default function GalleryView({
               onClick={() => setCurrentIndex(index)}
               className="relative group break-inside-avoid rounded-sm overflow-hidden bg-slate-50 cursor-zoom-in"
             >
-              <img
-                src={photo.url}
-                className="w-full h-auto hover:opacity-90 transition duration-500 select-none pointer-events-none"
-                loading="lazy"
-                alt=""
-              />
+              {/* Integrated SmartImage component with smooth load blur */}
+              <SmartImage src={photo.url} alt={gallery.title} width={600} />
+
               <div className="absolute top-2 right-2 md:opacity-0 group-hover:opacity-100 transition-opacity z-10">
                 <FavoriteButton
                   photoId={photo.id}
