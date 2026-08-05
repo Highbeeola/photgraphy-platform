@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import FavoriteButton from "@/components/FavoriteButton";
 import SmartImage from "@/components/SmartImage";
 
@@ -91,25 +91,15 @@ export default function GalleryView({
       </header>
 
       <main className="max-w-[1600px] mx-auto px-2 md:px-4 pb-20">
-        <div className="columns-2 md:columns-3 lg:columns-4 gap-2 md:gap-4 space-y-2 md:space-y-4">
+        <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
           {photos.map((photo, index) => (
             <div
               key={photo.id}
+              className="break-inside-avoid mb-4 cursor-zoom-in"
               onClick={() => setCurrentIndex(index)}
-              className="relative group break-inside-avoid rounded-sm overflow-hidden bg-slate-50 cursor-zoom-in"
             >
-              {/* Integrated SmartImage component with smooth load blur */}
-              <SmartImage src={photo.url} alt={gallery.title} width={600} />
-
-              <div className="absolute top-2 right-2 md:opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                <FavoriteButton
-                  photoId={photo.id}
-                  galleryId={gallery.id}
-                  isInitiallyFavorited={initialFavorites.some(
-                    (f) => f.photo_id === photo.id,
-                  )}
-                />
-              </div>
+              {/* SmartImage now has the relative and aspect classes inside it */}
+              <SmartImage src={photo.url} alt={gallery.title} />
             </div>
           ))}
         </div>
@@ -119,21 +109,39 @@ export default function GalleryView({
       {currentIndex !== null && (
         <div
           onClick={() => setCurrentIndex(null)}
-          className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center p-4 backdrop-blur-md animate-in fade-in duration-300 select-none"
+          className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center animate-in fade-in duration-300 select-none"
         >
-          {/* Close Button */}
-          <button
-            onClick={() => setCurrentIndex(null)}
-            className="absolute top-6 right-6 text-white/50 hover:text-white transition z-10"
+          {/* TOP BAR: Glassmorphism style */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="absolute top-0 inset-x-0 p-6 flex justify-between items-center z-[110] bg-gradient-to-b from-black/50 to-transparent"
           >
-            <X size={32} />
-          </button>
+            <span className="text-white/70 text-[10px] uppercase tracking-[0.3em] font-bold">
+              {currentIndex + 1} / {photos.length}
+            </span>
+            <div className="flex gap-4 items-center">
+              <FavoriteButton
+                photoId={photos[currentIndex].id}
+                galleryId={gallery.id}
+                isInitiallyFavorited={initialFavorites.some(
+                  (f) => f.photo_id === photos[currentIndex].id,
+                )}
+                variant="glass"
+              />
+              <button
+                onClick={() => setCurrentIndex(null)}
+                className="text-white/70 hover:text-white p-2 transition"
+              >
+                <X size={24} strokeWidth={1.5} />
+              </button>
+            </div>
+          </div>
 
           {/* Only show PREV if we aren't at the start */}
           {currentIndex > 0 && (
             <button
               onClick={showPrev}
-              className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition p-2 z-10 hover:scale-110"
+              className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition p-2 z-[110] hover:scale-110"
               aria-label="Previous photo"
             >
               <ChevronLeft size={44} />
@@ -141,38 +149,35 @@ export default function GalleryView({
           )}
 
           {/* Current Photo */}
-          <div
+          <img
             onClick={(e) => e.stopPropagation()}
-            className="flex flex-col items-center max-w-full max-h-[85vh]"
-          >
-            <img
-              src={photos[currentIndex].url}
-              className="max-w-full max-h-[75vh] object-contain shadow-2xl rounded-sm pointer-events-auto"
-              alt=""
-            />
-
-            <button
-              onClick={() => handleDownload(photos[currentIndex].url)}
-              className="mt-6 bg-white text-black px-8 py-3 rounded-full font-bold text-xs uppercase tracking-widest flex gap-2 items-center hover:bg-slate-200 transition active:scale-95"
-            >
-              <Download size={16} /> Download High Res
-            </button>
-          </div>
+            src={photos[currentIndex].url}
+            className="max-w-full max-h-[75vh] object-contain shadow-2xl animate-reveal pointer-events-auto"
+            alt="Full view"
+          />
 
           {/* Only show NEXT if we aren't at the end */}
           {currentIndex < photos.length - 1 && (
             <button
               onClick={showNext}
-              className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition p-2 z-10 hover:scale-110"
+              className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition p-2 z-[110] hover:scale-110"
               aria-label="Next photo"
             >
               <ChevronRight size={44} />
             </button>
           )}
 
-          {/* Counter Indicator */}
-          <div className="absolute bottom-6 text-white/40 text-xs font-mono tracking-widest">
-            {currentIndex + 1} / {photos.length}
+          {/* BOTTOM BAR: Actions */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="absolute bottom-10 flex flex-col items-center gap-6 z-[110]"
+          >
+            <button
+              onClick={() => handleDownload(photos[currentIndex].url)}
+              className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-10 py-4 rounded-full font-bold text-[10px] uppercase tracking-widest hover:bg-white hover:text-black transition-all active:scale-95"
+            >
+              Download High-Res
+            </button>
           </div>
         </div>
       )}

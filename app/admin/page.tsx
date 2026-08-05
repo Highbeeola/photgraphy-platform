@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import CreateGalleryForm from "./CreateGalleryForm";
-import { Calendar, Image as ImageIcon } from "lucide-react";
+import { Calendar, Image as ImageIcon, Eye } from "lucide-react";
 import Link from "next/link";
 import CopyLinkButton from "@/components/CopyLinkButton";
 import DeleteGalleryButton from "@/components/DeleteGalleryButton";
@@ -51,7 +51,7 @@ export default async function AdminDashboard() {
                 {/* 3. THE CARD LINK */}
                 <Link
                   href={`/admin/gallery/${gallery.id}`}
-                  className="block border border-slate-200 rounded-3xl bg-white overflow-hidden shadow-sm hover:shadow-xl hover:border-blue-400 transition-all duration-500"
+                  className="block border border-slate-200 rounded-3xl bg-white overflow-hidden shadow-sm hover:shadow-xl hover:border-blue-400 hover:-translate-y-2 transition-transform duration-500 ease-out"
                 >
                   <div className="aspect-[4/3] bg-slate-100 relative overflow-hidden">
                     {coverUrl ? (
@@ -87,9 +87,14 @@ export default async function AdminDashboard() {
                     <h3 className="font-bold text-slate-900 group-hover:text-blue-600 transition truncate">
                       {gallery.title}
                     </h3>
-                    <p className="text-[10px] text-slate-400 uppercase tracking-widest mt-1">
-                      {gallery.category || "Lifestyle"}
-                    </p>
+                    <div className="flex items-center justify-between mt-1">
+                      <p className="text-[10px] text-slate-400 uppercase tracking-widest">
+                        {gallery.category || "Lifestyle"}
+                      </p>
+                      <div className="flex items-center gap-1 text-slate-400 text-[9px] font-bold">
+                        <Eye size={10} /> {gallery.view_count ?? 0} VIEWS
+                      </div>
+                    </div>
                   </div>
                 </Link>
               </div>

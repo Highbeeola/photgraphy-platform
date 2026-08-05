@@ -17,88 +17,51 @@ export default function Uploader({ galleryId }: { galleryId: string }) {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-    const uploadPreset =
-      process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET ||
-      "your_unsigned_preset";
-
     setUploading(true);
-    let completed = 0;
-
     try {
       for (const file of Array.from(files)) {
-        // Delay between uploads to give mobile connections breathing room
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        // 1. Prepare Cloudinary FormData
+        // 1. UPLOAD TO CLOUDINARY
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("upload_preset", uploadPreset);
+        formData.append("upload_preset", "dara_pixel_preset"); // <--- Ensure this matches your Cloudinary preset exactly!
 
-        // 2. Direct upload to Cloudinary (with 1 retry)
-        let res = await fetch(
-          `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-          {
-            method: "POST",
-            body: formData,
-          },
+        const res = await fetch(
+          `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+          { method: "POST", body: formData },
         );
 
-        if (!res.ok) {
-          console.warn("Cloudinary upload failed, attempting 1-time retry...");
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-          res = await fetch(
-            `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-            {
-              method: "POST",
-              body: formData,
-            },
-          );
-        }
-
-        if (!res.ok) {
-          const errorData = await res.json();
-          console.error("Cloudinary Error Detail:", errorData);
-          throw new Error(
-            errorData?.error?.message || "Cloudinary upload failed",
-          );
-        }
-
         const data = await res.json();
-        const cloudinaryUrl = data.secure_url;
 
-        // 3. Save Cloudinary URL into Supabase
+        // Check if Cloudinary actually gave us a URL
+        if (!res.ok) {
+          console.error("Cloudinary Error:", data);
+          throw new Error(data.error?.message || "Cloudinary upload failed");
+        }
+
+        const cloudinaryUrl = data.secure_url; // This is the full 'https://...' link
+
+        // 2. SAVE TO SUPABASE (Only if Cloudinary succeeded)
         const { error: dbError } = await supabase.from("photos").insert({
           gallery_id: galleryId,
-          storage_path: cloudinaryUrl, // Full Cloudinary URL saved
+          storage_path: cloudinaryUrl, // WE ARE NOW SAVING THE FULL URL
         });
 
         if (dbError) throw dbError;
-
-        // UPDATE PROGRESS UI
-        completed++;
-        setProgress(Math.round((completed / files.length) * 100));
       }
 
-      toast.success(`${files.length} images delivered successfully!`);
+      toast.success("All images processed by Cloudinary!");
       await refreshGallery(galleryId);
-      window.location.reload(); // Force hard refresh to see new images
+      window.location.reload();
     } catch (error: any) {
-      console.error("Full Error Object:", error);
-      toast.error(
-        "Upload paused. Check your connection or Cloudinary preset settings.",
-      );
+      console.error("Pipeline Failure:", error);
+      toast.error(`Upload failed: ${error.message}`);
     } finally {
       setUploading(false);
-      setProgress(0);
-      // Reset input value so re-selecting the same file works as expected
-      e.target.value = "";
     }
   };
 
   return (
     <div className="relative group">
-      {/* Label trigger */}
       <label className="flex flex-col items-center justify-center w-full min-h-[200px] border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50 hover:bg-slate-100 transition-all cursor-pointer p-6 text-center">
         <input
           type="file"
@@ -122,7 +85,6 @@ export default function Uploader({ galleryId }: { galleryId: string }) {
         </div>
       </label>
 
-      {/* Progress Overlay */}
       {uploading && (
         <div className="absolute inset-0 bg-white/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-12 rounded-3xl">
           <div className="w-full max-w-xs space-y-4 text-center">

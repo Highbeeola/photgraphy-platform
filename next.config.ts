@@ -9,9 +9,15 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/storage/v1/object/public/**",
       },
+      // ADD THIS NEW SECTION:
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
+        port: "",
+        pathname: "/**", // Allows all Cloudinary images
+      },
     ],
   },
-  // We removed the 'experimental' block to stop the type error
 };
 
 export default nextConfig;

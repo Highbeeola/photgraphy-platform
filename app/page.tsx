@@ -51,12 +51,22 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-white text-[#1a1a1a] selection:bg-slate-100">
-      {/* --- 1. NAV (Logo Only) --- */}
-      <nav className="py-6 md:py-10 flex justify-center bg-white">
+      {/* 1. NAV (Logo Only - Scaled Up) */}
+      <nav className="py-10 md:py-16 flex justify-center bg-white">
         <img
-          src="/logo.png"
+          /* 
+             TRANSFORMATION: 
+             h_200: keeps a high-res source 
+             q_auto,f_auto: ensures it's a tiny WebP/PNG 
+          */
+          src="https://res.cloudinary.com/dcqnbrggc/image/upload/c_limit,h_200,q_auto,f_auto/logo_hz8esk"
           alt="Dara Pixel"
-          className="h-8 md:h-12 w-auto object-contain"
+          /* 
+             SIZE SCALING:
+             Mobile: h-14 (56px) 
+             Desktop: md:h-24 (96px)
+          */
+          className="h-14 md:h-24 w-auto object-contain transition-transform duration-700 hover:scale-105"
         />
       </nav>
 
@@ -70,9 +80,9 @@ export default async function HomePage() {
         <div className="md:col-span-5 order-2 md:order-1">
           <div className="aspect-[3/4] bg-slate-100 grayscale-[10%] overflow-hidden shadow-2xl rounded-sm">
             <img
-              src="/dara-portrait.jpg"
-              alt="Dara"
-              className="w-full h-full object-cover"
+              src="https://res.cloudinary.com/dcqnbrggc/image/upload/c_fill,g_face,w_800,h_1000,q_auto,f_auto/dara-portrait_ehh5hf"
+              alt="Dara Portrait"
+              className="w-full h-full object-cover animate-reveal"
             />
           </div>
         </div>
@@ -156,15 +166,13 @@ export default async function HomePage() {
       {/* --- 6. FOOTER --- */}
       <footer className="py-20 flex flex-col items-center gap-10 bg-white">
         <div className="flex flex-wrap justify-center gap-10 md:gap-12 text-slate-300 px-6">
-          {
-            <a
-              href="https://www.instagram.com/dara_pixel?igsh=MWVidnBhZml2dm5ydA%3D%3D&utm_source=qr"
-              target="_blank"
-              className="hover:text-black transition"
-            >
-              <FaInstagram size={22} />
-            </a>
-          }
+          <a
+            href="https://www.instagram.com/dara_pixel?igsh=MWVidnBhZml2dm5ydA%3D%3D&utm_source=qr"
+            target="_blank"
+            className="hover:text-black transition"
+          >
+            <FaInstagram size={22} />
+          </a>
           <a
             href="https://www.tiktok.com/@dara.pixel1?_r=1&_t=ZS-98XuQErCwIU"
             target="_blank"
