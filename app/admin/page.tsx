@@ -25,12 +25,14 @@ export default async function AdminDashboard() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {galleries?.map((gallery) => {
-            // Checks explicit cover_image_path first, falls back to the first photo
             const coverPath =
               gallery.cover_image_path || gallery.photos?.[0]?.storage_path;
+
             const coverUrl = coverPath
-              ? supabase.storage.from("galleries").getPublicUrl(coverPath).data
-                  .publicUrl
+              ? coverPath.startsWith("http")
+                ? coverPath
+                : supabase.storage.from("galleries").getPublicUrl(coverPath)
+                    .data.publicUrl
               : null;
 
             return (

@@ -8,6 +8,7 @@ import CopyLinkButton from "@/components/CopyLinkButton";
 import PublishButton from "@/components/PublishButton";
 import AdminPhotoControls from "@/components/AdminPhotoControls";
 import SmartImage from "@/components/SmartImage";
+import { updateGallerySettings } from "@/app/admin/actions";
 import {
   Eye,
   Image as ImageIcon,
@@ -52,14 +53,17 @@ export default async function PixiesetGalleryManager({
   const favoriteIds = new Set(favorites?.map((f) => f.photo_id));
 
   const coverUrl = gallery.cover_image_path
-    ? supabase.storage.from("galleries").getPublicUrl(gallery.cover_image_path)
-        .data.publicUrl
+    ? gallery.cover_image_path.startsWith("http")
+      ? gallery.cover_image_path
+      : supabase.storage
+          .from("galleries")
+          .getPublicUrl(gallery.cover_image_path).data.publicUrl
     : null;
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-white">
       {/* 1. LEFT SIDEBAR */}
-      <aside className="w-full lg:w-80 border-r border-slate-100 bg-white flex flex-col shrink-0">
+      <aside className="hidden lg:flex w-80 border-r border-slate-100 bg-white flex-col shrink-0 h-screen sticky top-0">
         <div className="p-4 border-b border-slate-100 flex items-center gap-2">
           <Link
             href="/admin"
@@ -72,13 +76,14 @@ export default async function PixiesetGalleryManager({
           </span>
         </div>
 
-        <div className="flex-1 overflow-y-auto pb-20 lg:pb-0">
+        <div className="flex-1 overflow-y-auto pb-20">
+          {/* Visibility Badge */}
           <div className="p-6 bg-slate-50 border-b border-slate-100">
             <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2">
               Visibility
             </p>
             {gallery.is_public ? (
-              <div className="flex items-center gap-2 text-green-600">
+              <div className="flex items-center gap-2 text-emerald-600">
                 <Globe size={14} />
                 <span className="text-xs font-bold uppercase">
                   Visible on Portfolio
@@ -94,11 +99,12 @@ export default async function PixiesetGalleryManager({
             )}
           </div>
 
+          {/* Cover Preview */}
           <div className="p-6 border-b border-slate-50">
             <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-3">
               Gallery Cover
             </p>
-            <div className="aspect-[3/2] bg-slate-100 rounded-xl overflow-hidden border border-slate-200 relative">
+            <div className="aspect-[3/2] bg-slate-100 rounded-xl overflow-hidden border border-slate-200">
               {coverUrl ? (
                 <img
                   src={coverUrl}
@@ -106,44 +112,98 @@ export default async function PixiesetGalleryManager({
                   alt="Cover"
                 />
               ) : (
-                <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-2">
-                  <ImageIcon size={24} />
-                  <span className="text-[10px] uppercase font-bold">
-                    No Cover
-                  </span>
+                <div className="flex flex-col items-center justify-center h-full text-slate-300 gap-2 font-serif italic text-xs">
+                  No Cover Set
                 </div>
               )}
             </div>
           </div>
 
-          <div className="p-6 space-y-6">
-            <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
-              <p className="text-[10px] uppercase tracking-widest text-blue-400 font-bold mb-1">
-                Client Activity
-              </p>
-              <div className="flex items-center gap-2">
-                <Heart size={16} className="text-blue-600 fill-blue-600" />
-                <span className="text-sm font-bold text-blue-900">
-                  {favoriteIds.size} Favorites
+          {/* Collection Permissions Toggles */}
+          <div className="p-6 space-y-6 border-b border-slate-50 bg-slate-50/30">
+            <p className="text-[10px] uppercase tracking-widest text-slate-400 font-black">
+              Collection Permissions
+            </p>
+
+            <div className="space-y-4">
+              {/* Toggle: Downloads */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-slate-600">
+                  Download
                 </span>
+                <form
+                  action={async () => {
+                    "use server";
+                    await updateGallerySettings(id, {
+                      allow_download: !gallery.allow_download,
+                    });
+                  }}
+                >
+                  <button
+                    type="submit"
+                    className={`w-10 h-5 rounded-full transition-all relative ${
+                      gallery.allow_download ? "bg-emerald-500" : "bg-slate-300"
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${
+                        gallery.allow_download ? "left-6" : "left-1"
+                      }`}
+                    />
+                  </button>
+                </form>
+              </div>
+
+              {/* Toggle: Favorites */}
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-slate-600">
+                  Favorite
+                </span>
+                <form
+                  action={async () => {
+                    "use server";
+                    await updateGallerySettings(id, {
+                      allow_favorites: !gallery.allow_favorites,
+                    });
+                  }}
+                >
+                  <button
+                    type="submit"
+                    className={`w-10 h-5 rounded-full transition-all relative ${
+                      gallery.allow_favorites
+                        ? "bg-emerald-500"
+                        : "bg-slate-300"
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${
+                        gallery.allow_favorites ? "left-6" : "left-1"
+                      }`}
+                    />
+                  </button>
+                </form>
               </div>
             </div>
+          </div>
+
+          {/* Access Info */}
+          <div className="p-6 space-y-6">
             <div>
               <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">
                 Access PIN
               </p>
-              <span className="text-lg font-mono font-bold tracking-widest bg-slate-100 px-4 py-2 rounded-lg border border-slate-200 mt-2 inline-block">
+              <span className="text-lg font-mono font-bold tracking-widest bg-slate-100 px-4 py-2 rounded-lg border border-slate-200 mt-2 inline-block uppercase">
                 {gallery.password || "None"}
               </span>
             </div>
           </div>
         </div>
 
-        <div className="hidden lg:block p-4 border-t border-slate-100">
+        <div className="p-4 border-t border-slate-100">
           <Link
             href={`/gallery/${id}`}
             target="_blank"
-            className="w-full flex items-center justify-center gap-2 py-4 bg-slate-900 text-white rounded-2xl font-bold text-xs uppercase tracking-widest"
+            className="w-full flex items-center justify-center gap-2 py-4 bg-slate-900 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-black transition shadow-lg shadow-slate-200"
           >
             <Eye size={16} /> Preview Gallery
           </Link>
@@ -190,9 +250,13 @@ export default async function PixiesetGalleryManager({
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {photos?.map((photo) => {
-                const publicUrl = supabase.storage
-                  .from("galleries")
-                  .getPublicUrl(photo.storage_path).data.publicUrl;
+                // FIX: Only use Supabase getPublicUrl if it's NOT a Cloudinary link
+                const publicUrl = photo.storage_path.startsWith("http")
+                  ? photo.storage_path
+                  : supabase.storage
+                      .from("galleries")
+                      .getPublicUrl(photo.storage_path).data.publicUrl;
+
                 const isCover = gallery.cover_image_path === photo.storage_path;
                 const isFavorited = favoriteIds.has(photo.id);
 

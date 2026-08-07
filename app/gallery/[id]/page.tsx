@@ -29,21 +29,17 @@ export default async function ClientGalleryPage({
     .eq("gallery_id", id)
     .order("created_at", { ascending: true });
 
-  // 3. SMART URL RESOLUTION
+  // 3. SMART URL RESOLUTION (The Fix)
   const photos =
     photosData?.map((p) => {
-      let finalUrl = p.storage_path;
-
-      if (!p.storage_path.startsWith("http")) {
-        finalUrl = supabase.storage
-          .from("galleries")
-          .getPublicUrl(p.storage_path).data.publicUrl;
-      }
+      const url = p.storage_path.startsWith("http")
+        ? p.storage_path
+        : supabase.storage.from("galleries").getPublicUrl(p.storage_path).data
+            .publicUrl;
 
       return {
-        id: p.id,
-        url: finalUrl,
-        storage_path: p.storage_path,
+        ...p,
+        url: url,
       };
     }) || [];
 
@@ -70,6 +66,11 @@ export default async function ClientGalleryPage({
     coverUrl = photos[0]?.url;
   }
 
+  // 6. INCREMENT VIEW COUNT (Only for unauthenticated visitors)
+  if (gallery && !user) {
+    await supabase.rpc("increment_gallery_views", { gallery_id: id });
+  }
+
   return (
     <div className="min-h-screen bg-white">
       {/* --- THE CINEMATIC HERO --- */}
@@ -84,29 +85,30 @@ export default async function ClientGalleryPage({
           />
         )}
 
-        {/* Hero Text Overlay - Integrated Metadata */}
-        <div className="relative z-10 text-center text-white space-y-4 px-6 pt-20">
-          <p className="text-[10px] uppercase tracking-[0.4em] font-black opacity-70">
-            {gallery.category} Collection • {photos.length} Selected Works
-          </p>
-          <h1 className="text-5xl md:text-9xl font-serif italic tracking-tighter leading-none">
-            {gallery.title}
-          </h1>
-          {/* Subtitle/Description (Optional Designer Request) */}
-          <p className="text-sm md:text-lg font-light opacity-60 max-w-md mx-auto italic">
-            Captured in{" "}
-            {gallery.event_date
-              ? new Date(gallery.event_date).toLocaleDateString("en-US", {
-                  month: "long",
-                  year: "numeric",
-                })
-              : "Lagos"}
-          </p>
+        {/* Hero Text Overlay */}
+        <div className="absolute inset-x-0 bottom-0 p-8 md:p-20 z-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-8 bg-gradient-to-t from-black/60 to-transparent">
+          <div className="space-y-2">
+            <p className="text-[10px] md:text-xs uppercase tracking-[0.6em] text-white/70 font-bold">
+              Captured in{" "}
+              {gallery.event_date
+                ? new Date(gallery.event_date).getFullYear()
+                : "2026"}
+            </p>
+            <h1 className="text-5xl md:text-8xl font-serif text-white uppercase tracking-tighter leading-none">
+              {gallery.title}
+            </h1>
+          </div>
+
+          <a
+            href="#grid"
+            className="px-10 py-4 border border-white/40 text-white text-[10px] uppercase tracking-widest font-black hover:bg-white hover:text-black transition-all backdrop-blur-md"
+          >
+            View Gallery
+          </a>
         </div>
       </section>
 
       {/* --- THE GRID AREA --- */}
-      {/* Grid Container - Reduced top padding (Designer Request #7) */}
       <div id="grid" className="pt-8 pb-20">
         {photos.length > 0 ? (
           <GalleryClientView

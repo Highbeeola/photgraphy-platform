@@ -18,11 +18,14 @@ export default function DeleteGalleryButton({
   const handleDelete = () => {
     startTransition(async () => {
       const result = await deleteGallery(galleryId);
+
       if (result?.error) {
-        toast.error("Delete failed: " + result.error);
-        setIsConfirming(false);
+        toast.error(result.error);
       } else {
-        toast.success(`"${galleryTitle}" deleted permanently.`);
+        toast.success("Gallery deleted.");
+        // THE ULTIMATE UI FIX:
+        // This forces the browser to go back to /admin and clear all memory.
+        window.location.assign("/admin");
       }
     });
   };

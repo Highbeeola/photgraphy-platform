@@ -9,6 +9,8 @@ interface Gallery {
   id: string;
   title: string;
   event_date?: string;
+  allow_favorites?: boolean;
+  allow_download?: boolean;
 }
 
 interface Photo {
@@ -120,14 +122,17 @@ export default function GalleryView({
               {currentIndex + 1} / {photos.length}
             </span>
             <div className="flex gap-4 items-center">
-              <FavoriteButton
-                photoId={photos[currentIndex].id}
-                galleryId={gallery.id}
-                isInitiallyFavorited={initialFavorites.some(
-                  (f) => f.photo_id === photos[currentIndex].id,
-                )}
-                variant="glass"
-              />
+              {/* 1. Only show Heart if allowed (Defaults to true if undefined) */}
+              {gallery.allow_favorites !== false && (
+                <FavoriteButton
+                  photoId={photos[currentIndex].id}
+                  galleryId={gallery.id}
+                  isInitiallyFavorited={initialFavorites.some(
+                    (f) => f.photo_id === photos[currentIndex].id,
+                  )}
+                  variant="glass"
+                />
+              )}
               <button
                 onClick={() => setCurrentIndex(null)}
                 className="text-white/70 hover:text-white p-2 transition"
@@ -168,17 +173,20 @@ export default function GalleryView({
           )}
 
           {/* BOTTOM BAR: Actions */}
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="absolute bottom-10 flex flex-col items-center gap-6 z-[110]"
-          >
-            <button
-              onClick={() => handleDownload(photos[currentIndex].url)}
-              className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-10 py-4 rounded-full font-bold text-[10px] uppercase tracking-widest hover:bg-white hover:text-black transition-all active:scale-95"
+          {/* 2. Only show Download if allowed (Defaults to true if undefined) */}
+          {gallery.allow_download !== false && (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="absolute bottom-10 flex flex-col items-center gap-6 z-[110]"
             >
-              Download High-Res
-            </button>
-          </div>
+              <button
+                onClick={() => handleDownload(photos[currentIndex].url)}
+                className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-10 py-4 rounded-full font-bold text-[10px] uppercase tracking-widest hover:bg-white hover:text-black transition-all active:scale-95"
+              >
+                Download High-Res
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

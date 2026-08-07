@@ -23,8 +23,10 @@ export default function Uploader({ galleryId }: { galleryId: string }) {
         // 1. UPLOAD TO CLOUDINARY
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("upload_preset", "dara_pixel_preset"); // <--- Ensure this matches your Cloudinary preset exactly!
-
+        formData.append(
+          "upload_preset",
+          process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!,
+        );
         const res = await fetch(
           `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
           { method: "POST", body: formData },

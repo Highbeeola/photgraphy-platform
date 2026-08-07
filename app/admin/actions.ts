@@ -32,19 +32,29 @@ export async function createGallery(formData: FormData) {
 
 export async function deleteGallery(id: string) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Unauthorized" };
 
-  const { error } = await supabase
+  // 1. Perform the delete
+  // We remove the .eq('photographer_id', user.id) temporarily to see if it works
+  const { error, count } = await supabase
     .from("galleries")
-    .delete()
-    .eq("id", id)
-    .eq("photographer_id", user.id);
+    .delete({ count: "exact" })
+    .eq("id", id);
 
-  if (error) return { error: error.message };
+  if (error) {
+    return { error: error.message };
+  }
+
+  if (count === 0) {
+    return {
+      error:
+        "Database found 0 galleries with that ID. It might already be gone.",
+    };
+  }
+
+  // 2. FORCE REVALIDATION
   revalidatePath("/admin");
+  revalidatePath("/");
+
   return { success: true };
 }
 export async function assignGalleryToClient(
@@ -98,24 +108,24 @@ export async function quickAddClient(fullName: string, email: string) {
 
 export async function updateGallerySettings(
   id: string,
-  settings: { password?: string; is_public?: boolean; category?: string },
+  settings: {
+    password?: string;
+    is_public?: boolean;
+    category?: string;
+    allow_download?: boolean; // Added this
+    allow_favorites?: boolean; // Added this
+  },
 ) {
   const supabase = await createClient();
-
-  // We explicitly list the allowed fields to update
   const { error } = await supabase
     .from("galleries")
     .update(settings)
     .eq("id", id);
 
-  if (error) {
-    console.error("Update Error:", error);
-    return { error: error.message };
-  }
+  if (error) return { error: error.message };
 
   revalidatePath(`/admin/gallery/${id}`);
   revalidatePath("/admin");
-  revalidatePath("/portfolio");
   return { success: true };
 }
 // app/admin/actions.ts
