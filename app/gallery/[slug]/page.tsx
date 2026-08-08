@@ -8,28 +8,28 @@ export const dynamic = "force-dynamic"; // Kill the cache
 export default async function ClientGalleryPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
 }) {
-  const { id } = await params;
+  const { slug } = await params;
   const supabase = await createClient();
 
-  // 1. Fetch Gallery
+  // 1. Fetch Gallery by slug
   const { data: gallery } = await supabase
     .from("galleries")
     .select("*")
-    .eq("id", id)
+    .eq("slug", slug)
     .single();
 
   if (!gallery) notFound();
 
-  // 2. Fetch Photos
+  // 2. Fetch Photos using gallery.id
   const { data: photosData } = await supabase
     .from("photos")
     .select("*")
-    .eq("gallery_id", id)
+    .eq("gallery_id", gallery.id)
     .order("created_at", { ascending: true });
 
-  // 3. SMART URL RESOLUTION (The Fix)
+  // 3. SMART URL RESOLUTION
   const photos =
     photosData?.map((p) => {
       const url = p.storage_path.startsWith("http")
@@ -68,7 +68,7 @@ export default async function ClientGalleryPage({
 
   // 6. INCREMENT VIEW COUNT (Only for unauthenticated visitors)
   if (gallery && !user) {
-    await supabase.rpc("increment_gallery_views", { gallery_id: id });
+    await supabase.rpc("increment_gallery_views", { gallery_id: gallery.id });
   }
 
   return (

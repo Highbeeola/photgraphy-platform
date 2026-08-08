@@ -6,10 +6,11 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { refreshGallery } from "@/app/admin/actions";
+import { motion } from "framer-motion";
 
 export default function Uploader({ galleryId }: { galleryId: string }) {
   const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const supabase = createClient();
   const router = useRouter();
 
@@ -18,7 +19,12 @@ export default function Uploader({ galleryId }: { galleryId: string }) {
     if (!files || files.length === 0) return;
 
     setUploading(true);
+    setUploadProgress(0); // Reset at start
+
     try {
+      const totalFiles = files.length;
+      let completedCount = 0;
+
       for (const file of Array.from(files)) {
         // 1. UPLOAD TO CLOUDINARY
         const formData = new FormData();
@@ -27,6 +33,7 @@ export default function Uploader({ galleryId }: { galleryId: string }) {
           "upload_preset",
           process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET!,
         );
+
         const res = await fetch(
           `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
           { method: "POST", body: formData },
@@ -49,9 +56,14 @@ export default function Uploader({ galleryId }: { galleryId: string }) {
         });
 
         if (dbError) throw dbError;
+
+        completedCount++;
+        // Calculate real percentage based on how many files are finished
+        const progress = Math.round((completedCount / totalFiles) * 100);
+        setUploadProgress(progress);
       }
 
-      toast.success("All images processed by Cloudinary!");
+      toast.success("All images delivered.");
       await refreshGallery(galleryId);
       window.location.reload();
     } catch (error: any) {
@@ -79,7 +91,9 @@ export default function Uploader({ galleryId }: { galleryId: string }) {
             <Plus size={24} />
           </div>
           <p className="text-sm font-bold text-slate-700">
-            {uploading ? `Uploading to Cloud (${progress}%)` : "Add Photos"}
+            {uploading
+              ? `Uploading to Cloud (${uploadProgress}%)`
+              : "Add Photos"}
           </p>
           <p className="text-xs text-slate-400">
             {uploading ? "Please wait..." : "Click here to open your library"}
@@ -88,16 +102,19 @@ export default function Uploader({ galleryId }: { galleryId: string }) {
       </label>
 
       {uploading && (
-        <div className="absolute inset-0 bg-white/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-12 rounded-3xl">
-          <div className="w-full max-w-xs space-y-4 text-center">
-            <div className="h-1 w-full bg-slate-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-black transition-all duration-500 ease-out"
-                style={{ width: `${progress}%` }}
+        <div className="absolute inset-0 bg-white/90 backdrop-blur-md z-50 flex flex-col items-center justify-center p-12 rounded-3xl">
+          <div className="w-full max-w-xs space-y-4">
+            {/* REAL PROGRESS BAR */}
+            <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-[#d4af37]" // Gold color
+                initial={{ width: 0 }}
+                animate={{ width: `${uploadProgress}%` }}
+                transition={{ duration: 0.3 }}
               />
             </div>
-            <p className="text-[10px] uppercase tracking-[0.3em] font-black animate-pulse">
-              Uploading {progress}%
+            <p className="text-[10px] text-center uppercase tracking-[0.4em] font-black text-slate-400">
+              Processing {uploadProgress}%
             </p>
           </div>
         </div>

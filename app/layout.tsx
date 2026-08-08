@@ -66,7 +66,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${serif.variable} ${sans.variable}`}>
+    <html
+      lang="en"
+      className={`${serif.variable} ${sans.variable}`}
+      data-scroll-behavior="smooth"
+    >
       <body className={`${serif.variable} ${sans.variable} antialiased`}>
         <div className="animate-in fade-in duration-1000 ease-in-out">
           {children}

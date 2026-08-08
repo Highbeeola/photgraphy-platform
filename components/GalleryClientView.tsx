@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image, { ImageLoader } from "next/image";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import FavoriteButton from "@/components/FavoriteButton";
 import SmartImage from "@/components/SmartImage";
@@ -23,6 +24,16 @@ interface Favorite {
   photo_id: string;
 }
 
+// Cloudinary loader function for lightbox Next Image optimization
+const cloudinaryLoader: ImageLoader = ({ src, width, quality }) => {
+  if (src.includes("res.cloudinary.com")) {
+    const parts = src.split("/upload/");
+    const transformation = `w_${width},c_limit,q_${quality || "auto"},f_auto`;
+    return `${parts[0]}/upload/${transformation}/${parts[1]}`;
+  }
+  return src;
+};
+
 export default function GalleryView({
   gallery,
   photos,
@@ -33,6 +44,18 @@ export default function GalleryView({
   initialFavorites?: Favorite[];
 }) {
   const [currentIndex, setCurrentIndex] = useState<number | null>(null);
+
+  // 1. Lock body scroll when modal is open
+  useEffect(() => {
+    if (currentIndex !== null) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [currentIndex]);
 
   const showNext = (e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -111,7 +134,7 @@ export default function GalleryView({
       {currentIndex !== null && (
         <div
           onClick={() => setCurrentIndex(null)}
-          className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center animate-in fade-in duration-300 select-none"
+          className="fixed inset-0 z-[100] bg-black w-full h-screen overflow-hidden touch-none backdrop-blur-xl flex flex-col items-center justify-center animate-in fade-in duration-300 select-none"
         >
           {/* TOP BAR: Glassmorphism style */}
           <div
@@ -153,13 +176,20 @@ export default function GalleryView({
             </button>
           )}
 
-          {/* Current Photo */}
-          <img
+          {/* THE LIGHTBOX MODAL IMAGE CONTAINER */}
+          <div
             onClick={(e) => e.stopPropagation()}
-            src={photos[currentIndex].url}
-            className="max-w-full max-h-[75vh] object-contain shadow-2xl animate-reveal pointer-events-auto"
-            alt="Full view"
-          />
+            className="relative w-full h-[70vh] md:h-[80vh] flex items-center justify-center pointer-events-auto"
+          >
+            <Image
+              loader={cloudinaryLoader}
+              src={photos[currentIndex].url}
+              alt="Preview"
+              fill
+              sizes="100vw"
+              className="object-contain"
+            />
+          </div>
 
           {/* Only show NEXT if we aren't at the end */}
           {currentIndex < photos.length - 1 && (

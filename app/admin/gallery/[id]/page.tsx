@@ -19,13 +19,11 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-// FIX 1: Explicitly type params as a Promise for Next.js 16
 export default async function PixiesetGalleryManager({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  // FIX 2: You MUST await params before using id
   const { id } = await params;
   const supabase = await createClient();
 
@@ -201,7 +199,7 @@ export default async function PixiesetGalleryManager({
 
         <div className="p-4 border-t border-slate-100">
           <Link
-            href={`/gallery/${id}`}
+            href={`/gallery/${gallery.slug}`}
             target="_blank"
             className="w-full flex items-center justify-center gap-2 py-4 bg-slate-900 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-black transition shadow-lg shadow-slate-200"
           >
@@ -218,11 +216,11 @@ export default async function PixiesetGalleryManager({
           </h1>
           <div className="flex gap-3 w-full lg:w-auto justify-between lg:justify-end">
             <div className="flex gap-2">
-              <CopyLinkButton galleryId={id} />
+              <CopyLinkButton galleryId={gallery.slug} />
               <PublishButton galleryId={id} isPublic={gallery.is_public} />
             </div>
             <Link
-              href={`/gallery/${id}`}
+              href={`/gallery/${gallery.slug}`}
               target="_blank"
               className="lg:hidden p-2 bg-slate-100 rounded-lg"
             >
@@ -232,6 +230,37 @@ export default async function PixiesetGalleryManager({
         </header>
 
         <div className="p-6 space-y-10">
+          {/* MOBILE-ONLY SETTINGS (Visible only on small screens) */}
+          <div className="lg:hidden bg-slate-50 p-6 rounded-2xl border border-slate-100 mb-8 space-y-4">
+            <p className="text-[10px] uppercase tracking-widest text-slate-400 font-black">
+              Quick Settings
+            </p>
+
+            <div className="flex flex-wrap gap-4">
+              {/* Status Indicator */}
+              <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-100">
+                <div
+                  className={`w-2 h-2 rounded-full ${gallery.is_public ? "bg-emerald-500" : "bg-orange-400"}`}
+                />
+                <span className="text-[10px] font-bold uppercase">
+                  {gallery.is_public ? "Published" : "Draft"}
+                </span>
+              </div>
+
+              {/* PIN Display */}
+              <div className="bg-white px-3 py-2 rounded-xl border border-slate-100 text-[10px] font-bold uppercase flex items-center gap-2">
+                <span className="text-slate-400">PIN:</span>
+                <span className="font-mono">{gallery.password || "NONE"}</span>
+              </div>
+            </div>
+
+            {/* Feature Toggles (If you kept them) */}
+            <div className="grid grid-cols-2 gap-2 pt-2">
+              <PublishButton galleryId={id} isPublic={gallery.is_public} />
+              <CopyLinkButton galleryId={gallery.slug} />
+            </div>
+          </div>
+
           <Uploader galleryId={id} />
 
           {/* Photo Grid with Mobile-Friendly Controls or Empty State */}
@@ -250,7 +279,6 @@ export default async function PixiesetGalleryManager({
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {photos?.map((photo) => {
-                // FIX: Only use Supabase getPublicUrl if it's NOT a Cloudinary link
                 const publicUrl = photo.storage_path.startsWith("http")
                   ? photo.storage_path
                   : supabase.storage

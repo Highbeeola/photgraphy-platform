@@ -3,6 +3,15 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
+function generateSlug(title: string) {
+  return title
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 export async function createGallery(formData: FormData) {
   const supabase = await createClient();
   const title = formData.get("title") as string;
@@ -14,9 +23,12 @@ export async function createGallery(formData: FormData) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const slug = generateSlug(title);
+
   const { error } = await supabase.from("galleries").insert([
     {
       title,
+      slug: `${slug}-${Math.floor(1000 + Math.random() * 9000)}`, // Adds a random 4-digit code to ensure it's always unique
       event_date: eventDate || null,
       password: password || null,
       category: category || "Lifestyle", // SAVE THE CATEGORY
@@ -57,6 +69,7 @@ export async function deleteGallery(id: string) {
 
   return { success: true };
 }
+
 export async function assignGalleryToClient(
   galleryId: string,
   clientId: string,
@@ -71,6 +84,7 @@ export async function assignGalleryToClient(
   revalidatePath(`/admin/gallery/${galleryId}`);
   return { success: true };
 }
+
 export async function setGalleryCover(galleryId: string, imagePath: string) {
   const supabase = await createClient();
 
@@ -90,6 +104,7 @@ export async function setGalleryCover(galleryId: string, imagePath: string) {
   revalidatePath("/portfolio");
   return { success: true };
 }
+
 export async function quickAddClient(fullName: string, email: string) {
   const supabase = await createClient();
 
@@ -102,9 +117,6 @@ export async function quickAddClient(fullName: string, email: string) {
   revalidatePath("/admin/clients");
   return { success: true };
 }
-// app/admin/actions.ts
-
-// ... (keep your existing createGallery, deleteGallery, etc.)
 
 export async function updateGallerySettings(
   id: string,
@@ -128,7 +140,6 @@ export async function updateGallerySettings(
   revalidatePath("/admin");
   return { success: true };
 }
-// app/admin/actions.ts
 
 export async function togglePhotoFeature(photoId: string, isFeatured: boolean) {
   const supabase = await createClient();
@@ -159,12 +170,14 @@ export async function toggleHeroStatus(photoId: string, isHero: boolean) {
   revalidatePath("/admin");
   return { success: true };
 }
+
 export async function refreshGallery(id: string) {
   // This clears the cache for both the Admin view and the Public view
   revalidatePath(`/admin/gallery/${id}`);
   revalidatePath(`/gallery/${id}`);
   revalidatePath(`/portfolio`);
 }
+
 export async function deletePhoto(
   photoId: string,
   storagePath: string,

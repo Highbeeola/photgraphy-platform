@@ -1,10 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
+import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default async function PortfolioPage() {
+  noStore();
+
   const supabase = await createClient();
 
   // Fetch public galleries ordered by creation date
@@ -14,14 +17,10 @@ export default async function PortfolioPage() {
     .eq("is_public", true)
     .order("created_at", { ascending: false });
 
-  const categories = [
-    "Wedding",
-    "Lifestyle",
-    "Birthday",
-    "Convocation",
-    "Baby",
-    "Bridal Shower",
-  ];
+  // DYNAMIC CATEGORIES: Automatically extracts unique categories from the database
+  const categories = Array.from(
+    new Set(galleries?.map((g) => g.category).filter(Boolean)),
+  );
 
   return (
     <div className="min-h-screen bg-[#fafafa] pb-20">
@@ -69,7 +68,7 @@ export default async function PortfolioPage() {
                   return (
                     <Link
                       key={gallery.id}
-                      href={`/gallery/${gallery.id}`}
+                      href={`/gallery/${gallery.slug}`}
                       className="group space-y-6"
                     >
                       <div className="aspect-[3/2] overflow-hidden bg-slate-200 shadow-sm transition-all duration-700 group-hover:shadow-2xl">

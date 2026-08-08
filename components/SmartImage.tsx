@@ -13,20 +13,18 @@ export default function SmartImage({ src, alt, width }: SmartImageProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
 
-  // CLOUDINARY LOADER: This tells Cloudinary to only send the pixels needed
+  // CLOUDINARY LOADER: Dynamically injects optimization flags into Cloudinary URLs
   const cloudinaryLoader = ({
     src: loaderSrc,
     width: nextWidth,
     quality,
   }: any) => {
     if (loaderSrc.includes("res.cloudinary.com")) {
-      const params = [
-        `w_${width || nextWidth}`,
-        "c_limit",
-        `q_${quality || "auto"}`,
-        "f_auto",
-      ];
-      return loaderSrc.replace("/upload/", `/upload/${params.join(",")}/`);
+      // Standard Cloudinary URL structure is: .../upload/v12345/filename.jpg
+      // We split it to insert the width Next.js is requesting
+      const parts = loaderSrc.split("/upload/");
+      const transformation = `w_${nextWidth},c_limit,q_auto,f_auto`;
+      return `${parts[0]}/upload/${transformation}/${parts[1]}`;
     }
     return loaderSrc;
   };

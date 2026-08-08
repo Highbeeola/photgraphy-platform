@@ -45,23 +45,23 @@ export default function HeroCarousel({ photos }: HeroCarouselProps) {
       {photos.map((photo, index) => (
         <div
           key={index}
-          className={`absolute inset-0 w-full h-full transition-opacity duration-[1500ms] ${
+          className={`absolute inset-0 w-full h-full transition-opacity duration-[2000ms] ${
             index === current ? "opacity-100 z-10" : "opacity-0 z-0"
           }`}
         >
-          <div className="absolute inset-0 w-full h-full">
-            {" "}
-            {/* Container must be absolute inset-0 */}
+          {/* Relative wrapper anchors the fill image cleanly */}
+          <div className="relative w-full h-full">
             <Image
               loader={cloudinaryLoader}
               src={photo.url}
-              fill // This makes it fill the container perfectly
-              priority={index === 0} // Makes it load first
+              fill
+              priority={index === 0}
+              sizes="100vw"
               className="object-cover object-[50%_15%]"
-              alt="Hero"
+              alt="Photography Hero"
             />
+            <div className="absolute inset-0 bg-black/20 z-20" />
           </div>
-          <div className="absolute inset-0 bg-black/20 z-20" />
         </div>
       ))}
 

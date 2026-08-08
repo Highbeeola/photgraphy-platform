@@ -35,9 +35,12 @@ export default async function AdminDashboard() {
                     .data.publicUrl
               : null;
 
+            // FIX 1: Use slug if available for share button, fallback to id
+            const gallerySlugOrId = gallery.slug || gallery.id;
+
             return (
               <div key={gallery.id} className="group relative">
-                {/* 1. THE DELETE BUTTON (Client Component with modal/confirm support) */}
+                {/* 1. THE DELETE BUTTON */}
                 <div className="absolute top-3 left-3 z-30 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300">
                   <DeleteGalleryButton
                     galleryId={gallery.id}
@@ -45,13 +48,14 @@ export default async function AdminDashboard() {
                   />
                 </div>
 
-                {/* 2. THE SHARE BUTTON (Visible on mobile, hover-only on desktop) */}
+                {/* 2. THE SHARE BUTTON */}
                 <div className="absolute top-3 right-3 z-30 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300">
-                  <CopyLinkButton galleryId={gallery.id} />
+                  <CopyLinkButton galleryId={gallerySlugOrId} />
                 </div>
 
                 {/* 3. THE CARD LINK */}
                 <Link
+                  key={gallery.id}
                   href={`/admin/gallery/${gallery.id}`}
                   className="block border border-slate-200 rounded-3xl bg-white overflow-hidden shadow-sm hover:shadow-xl hover:border-blue-400 hover:-translate-y-2 transition-transform duration-500 ease-out"
                 >

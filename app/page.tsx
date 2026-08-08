@@ -15,6 +15,9 @@ export default async function HomePage() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const cloudName =
+    process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "dcqnbrggc";
+
   // Fetch role from 'users' table if user exists
   let isPhotographer = false;
   if (user) {
@@ -45,8 +48,10 @@ export default async function HomePage() {
   // Transform for Carousel
   const heroImages =
     heroPhotos?.map((p) => ({
-      url: supabase.storage.from("galleries").getPublicUrl(p.storage_path).data
-        .publicUrl,
+      url: p.storage_path.startsWith("http")
+        ? p.storage_path
+        : supabase.storage.from("galleries").getPublicUrl(p.storage_path).data
+            .publicUrl,
     })) || [];
 
   return (
@@ -54,18 +59,8 @@ export default async function HomePage() {
       {/* 1. NAV (Logo Only - Scaled Up) */}
       <nav className="py-10 md:py-16 flex justify-center bg-white">
         <img
-          /* 
-             TRANSFORMATION: 
-             h_200: keeps a high-res source 
-             q_auto,f_auto: ensures it's a tiny WebP/PNG 
-          */
-          src="https://res.cloudinary.com/dcqnbrggc/image/upload/c_limit,h_200,q_auto,f_auto/logo_hz8esk"
+          src={`https://res.cloudinary.com/${cloudName}/image/upload/c_limit,h_200,q_auto,f_auto/logo_hz8esk`}
           alt="Dara Pixel"
-          /* 
-             SIZE SCALING:
-             Mobile: h-14 (56px) 
-             Desktop: md:h-24 (96px)
-          */
           className="h-14 md:h-24 w-auto object-contain transition-transform duration-700 hover:scale-105"
         />
       </nav>
@@ -80,7 +75,7 @@ export default async function HomePage() {
         <div className="md:col-span-5 order-2 md:order-1">
           <div className="aspect-[3/4] bg-slate-100 grayscale-[10%] overflow-hidden shadow-2xl rounded-sm">
             <img
-              src="https://res.cloudinary.com/dcqnbrggc/image/upload/c_fill,g_face,w_800,h_1000,q_auto,f_auto/dara-portrait_ehh5hf"
+              src={`https://res.cloudinary.com/${cloudName}/image/upload/c_fill,g_face,w_800,h_1000,q_auto,f_auto/dara-portrait_ehh5hf`}
               alt="Dara Portrait"
               className="w-full h-full object-cover animate-reveal"
             />
@@ -127,9 +122,12 @@ export default async function HomePage() {
                 featuredPhotos?.map((item) => [item.storage_path, item]),
               ).values(),
             ).map((photo: any) => {
-              const url = supabase.storage
-                .from("galleries")
-                .getPublicUrl(photo.storage_path).data.publicUrl;
+              const url = photo.storage_path.startsWith("http")
+                ? photo.storage_path
+                : supabase.storage
+                    .from("galleries")
+                    .getPublicUrl(photo.storage_path).data.publicUrl;
+
               return (
                 <div
                   key={photo.id}
