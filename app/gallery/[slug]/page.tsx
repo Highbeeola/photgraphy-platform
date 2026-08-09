@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import GalleryClientView from "@/components/GalleryClientView";
 
-export const dynamic = "force-dynamic"; // Kill the cache
+export const dynamic = "force-dynamic";
 
 export default async function ClientGalleryPage({
   params,
@@ -43,10 +43,11 @@ export default async function ClientGalleryPage({
       };
     }) || [];
 
-  // 4. Fetch Favorites for the user
+  // 4. Fetch User & Favorites
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
   const { data: favorites } = user
     ? await supabase
         .from("favorites")
@@ -56,7 +57,6 @@ export default async function ClientGalleryPage({
 
   // 5. SMART COVER RESOLUTION
   let coverUrl = gallery.cover_image_path;
-
   if (coverUrl) {
     if (!coverUrl.startsWith("http")) {
       coverUrl = supabase.storage.from("galleries").getPublicUrl(coverUrl)
@@ -66,7 +66,7 @@ export default async function ClientGalleryPage({
     coverUrl = photos[0]?.url;
   }
 
-  // 6. INCREMENT VIEW COUNT (Only for unauthenticated visitors)
+  // 6. INCREMENT VIEW COUNT
   if (gallery && !user) {
     await supabase.rpc("increment_gallery_views", { gallery_id: gallery.id });
   }
@@ -81,7 +81,7 @@ export default async function ClientGalleryPage({
             alt={gallery.title}
             fill
             priority
-            className="object-cover object-[50%_15%] opacity-60 animate-reveal"
+            className="object-cover object-[50%_20%] opacity-60 animate-reveal"
           />
         )}
 
@@ -108,13 +108,14 @@ export default async function ClientGalleryPage({
         </div>
       </section>
 
-      {/* --- THE GRID AREA --- */}
-      <div id="grid" className="pt-8 pb-20">
+      {/* --- THE GRID & CLIENT CONTROLS AREA --- */}
+      <div id="grid" className="pb-20">
         {photos.length > 0 ? (
           <GalleryClientView
             gallery={gallery}
             photos={photos}
             initialFavorites={favorites || []}
+            user={user}
           />
         ) : (
           <div className="min-h-screen flex items-center justify-center text-slate-300 italic font-serif">

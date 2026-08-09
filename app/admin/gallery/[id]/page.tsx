@@ -8,6 +8,7 @@ import CopyLinkButton from "@/components/CopyLinkButton";
 import PublishButton from "@/components/PublishButton";
 import AdminPhotoControls from "@/components/AdminPhotoControls";
 import SmartImage from "@/components/SmartImage";
+import EditableGalleryTitle from "@/components/EditableGalleryTitle";
 import { updateGallerySettings } from "@/app/admin/actions";
 import {
   Eye,
@@ -16,6 +17,7 @@ import {
   Globe,
   Heart,
   Lock,
+  UserCheck,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -43,12 +45,24 @@ export default async function PixiesetGalleryManager({
     .eq("gallery_id", id)
     .order("created_at", { ascending: true });
 
+  // 3. FETCH FAVORITES WITH GUEST/CLIENT EMAIL
   const { data: favorites } = await supabase
     .from("favorites")
-    .select("photo_id")
+    .select("photo_id, guest_email")
     .in("photo_id", photos?.map((p) => p.id) || []);
 
   const favoriteIds = new Set(favorites?.map((f) => f.photo_id));
+
+  // Group favorites by client/guest email
+  const favoritesByEmail = (favorites || []).reduce(
+    (acc, fav) => {
+      const email = fav.guest_email || "Anonymous Client";
+      if (!acc[email]) acc[email] = 0;
+      acc[email] += 1;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   const coverUrl = gallery.cover_image_path
     ? gallery.cover_image_path.startsWith("http")
@@ -60,7 +74,7 @@ export default async function PixiesetGalleryManager({
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-white">
-      {/* 1. LEFT SIDEBAR */}
+      {/* 1. LEFT SIDEBAR (Desktop) */}
       <aside className="hidden lg:flex w-80 border-r border-slate-100 bg-white flex-col shrink-0 h-screen sticky top-0">
         <div className="p-4 border-b border-slate-100 flex items-center gap-2">
           <Link
@@ -75,6 +89,14 @@ export default async function PixiesetGalleryManager({
         </div>
 
         <div className="flex-1 overflow-y-auto pb-20">
+          {/* Gallery Name Inline Editable Field (Desktop) */}
+          <div className="p-6 border-b border-slate-50">
+            <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-3">
+              Gallery Name
+            </p>
+            <EditableGalleryTitle id={id} initialTitle={gallery.title} />
+          </div>
+
           {/* Visibility Badge */}
           <div className="p-6 bg-slate-50 border-b border-slate-100">
             <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2">
@@ -115,6 +137,44 @@ export default async function PixiesetGalleryManager({
                 </div>
               )}
             </div>
+          </div>
+
+          {/* CLIENT FAVORITES SUMMARY BY EMAIL */}
+          <div className="p-6 border-b border-slate-50">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">
+                Client Selections
+              </p>
+              <Heart size={12} className="text-red-500 fill-red-500" />
+            </div>
+
+            {Object.keys(favoritesByEmail).length === 0 ? (
+              <p className="text-xs text-slate-400 italic">
+                No favorites selected yet
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {Object.entries(favoritesByEmail).map(([email, count]) => (
+                  <div
+                    key={email}
+                    className="flex items-center justify-between bg-slate-50 p-2.5 rounded-xl text-xs"
+                  >
+                    <div className="flex items-center gap-2 truncate pr-2">
+                      <UserCheck
+                        size={14}
+                        className="text-slate-400 shrink-0"
+                      />
+                      <span className="font-medium text-slate-700 truncate">
+                        {email}
+                      </span>
+                    </div>
+                    <span className="bg-slate-200 text-slate-800 font-bold px-2 py-0.5 rounded-full text-[10px]">
+                      {count}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Collection Permissions Toggles */}
@@ -231,33 +291,81 @@ export default async function PixiesetGalleryManager({
 
         <div className="p-6 space-y-10">
           {/* MOBILE-ONLY SETTINGS (Visible only on small screens) */}
-          <div className="lg:hidden bg-slate-50 p-6 rounded-2xl border border-slate-100 mb-8 space-y-4">
-            <p className="text-[10px] uppercase tracking-widest text-slate-400 font-black">
-              Quick Settings
-            </p>
-
-            <div className="flex flex-wrap gap-4">
-              {/* Status Indicator */}
-              <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-slate-100">
-                <div
-                  className={`w-2 h-2 rounded-full ${gallery.is_public ? "bg-emerald-500" : "bg-orange-400"}`}
-                />
-                <span className="text-[10px] font-bold uppercase">
-                  {gallery.is_public ? "Published" : "Draft"}
-                </span>
-              </div>
-
-              {/* PIN Display */}
-              <div className="bg-white px-3 py-2 rounded-xl border border-slate-100 text-[10px] font-bold uppercase flex items-center gap-2">
-                <span className="text-slate-400">PIN:</span>
-                <span className="font-mono">{gallery.password || "NONE"}</span>
+          <div className="lg:hidden bg-slate-50 p-6 rounded-2xl border border-slate-100 mb-8 space-y-6">
+            <div className="flex justify-between items-center border-b border-slate-200 pb-4">
+              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                Settings
+              </span>
+              <div
+                className={`px-3 py-1 rounded-full text-[10px] font-bold ${gallery.is_public ? "bg-emerald-100 text-emerald-600" : "bg-orange-100 text-orange-600"}`}
+              >
+                {gallery.is_public ? "LIVE" : "DRAFT"}
               </div>
             </div>
 
-            {/* Feature Toggles (If you kept them) */}
-            <div className="grid grid-cols-2 gap-2 pt-2">
-              <PublishButton galleryId={id} isPublic={gallery.is_public} />
-              <CopyLinkButton galleryId={gallery.slug} />
+            {/* Editable Gallery Name on Mobile */}
+            <div className="space-y-1 border-b border-slate-200 pb-4">
+              <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold">
+                Gallery Name
+              </p>
+              <EditableGalleryTitle id={id} initialTitle={gallery.title} />
+            </div>
+
+            {/* Mobile Client Selections Summary */}
+            <div className="border-b border-slate-200 pb-4">
+              <p className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-2">
+                Client Selections
+              </p>
+              {Object.keys(favoritesByEmail).length === 0 ? (
+                <p className="text-xs text-slate-400 italic">
+                  No favorites selected
+                </p>
+              ) : (
+                <div className="space-y-1">
+                  {Object.entries(favoritesByEmail).map(([email, count]) => (
+                    <div
+                      key={email}
+                      className="flex justify-between items-center text-xs text-slate-600"
+                    >
+                      <span className="truncate">{email}</span>
+                      <span className="font-bold">{count} photos</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* TOGGLES */}
+            <div className="space-y-4">
+              <div className="flex justify-between items-center text-xs font-bold uppercase text-slate-600">
+                <span>Allow Downloads</span>
+                <form
+                  action={async () => {
+                    "use server";
+                    await updateGallerySettings(id, {
+                      allow_download: !gallery.allow_download,
+                    });
+                  }}
+                >
+                  <button
+                    type="submit"
+                    className={`w-10 h-5 rounded-full relative transition-all ${gallery.allow_download ? "bg-emerald-500" : "bg-slate-300"}`}
+                  >
+                    <div
+                      className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${gallery.allow_download ? "left-6" : "left-1"}`}
+                    />
+                  </button>
+                </form>
+              </div>
+
+              <div className="flex justify-between items-center text-xs font-bold uppercase text-slate-600">
+                <span>
+                  Access PIN:{" "}
+                  <span className="font-mono text-black ml-2">
+                    {gallery.password || "NONE"}
+                  </span>
+                </span>
+              </div>
             </div>
           </div>
 

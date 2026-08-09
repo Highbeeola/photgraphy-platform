@@ -122,6 +122,7 @@ export async function updateGallerySettings(
   id: string,
   settings: {
     password?: string;
+    title?: string;
     is_public?: boolean;
     category?: string;
     allow_download?: boolean; // Added this
@@ -195,4 +196,44 @@ export async function deletePhoto(
 
   revalidatePath(`/admin/gallery/${galleryId}`);
   return { success: true };
+}
+
+export async function bulkFavorite(photoIds: string[], galleryId: string) {
+  const supabase = await createClient();
+
+  // 1. Get the current user session
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    throw new Error("You must be logged in to favorite photos.");
+  }
+
+  if (!photoIds || photoIds.length === 0) {
+    return { success: true, count: 0 };
+  }
+
+  // 2. Format rows for batch insert
+  const records = photoIds.map((photoId) => ({
+    client_id: user.id,
+    gallery_id: galleryId,
+    photo_id: photoId,
+  }));
+
+  // 3. Batch insert/upsert into favorites table
+  const { error } = await supabase
+    .from("favorites")
+    .upsert(records, { onConflict: "client_id, photo_id" });
+
+  if (error) {
+    console.error("Error bulk favoriting photos:", error);
+    throw new Error(error.message);
+  }
+
+  // 4. Revalidate cache for the client gallery route
+  revalidatePath(`/gallery/[slug]`, "page");
+
+  return { success: true, count: records.length };
 }
