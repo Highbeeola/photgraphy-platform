@@ -63,7 +63,7 @@ export default function GalleryClientView({
 
   // Touch swipe state
   const touchStartX = useRef<number>(0);
-  const isMultiTouch = useRef<boolean>(false);
+  const ignoreSwipe = useRef<boolean>(false);
 
   // Reset zoom scale when index changes
   useEffect(() => {
@@ -114,31 +114,42 @@ export default function GalleryClientView({
     setZoomScale((prev) => (prev === 1 ? 2.2 : 1));
   };
 
-  // Touch handlers (guarded against multi-touch pinch)
   const handleTouchStart = (e: React.TouchEvent) => {
+    // If more than 1 finger is on the screen, lock out swipe navigation
     if (e.touches.length > 1) {
-      // Flag multi-touch (pinch) so swipe handler ignores it
-      isMultiTouch.current = true;
+      ignoreSwipe.current = true;
       return;
     }
-    isMultiTouch.current = false;
+
+    // If we are already zoomed in, don't allow swiping
+    if (zoomScale > 1) {
+      ignoreSwipe.current = true;
+      return;
+    }
+
+    ignoreSwipe.current = false;
     touchStartX.current = e.touches[0].clientX;
   };
 
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length > 1 || zoomScale > 1) {
+      ignoreSwipe.current = true;
+    }
+  };
+
   const handleTouchEnd = (e: React.TouchEvent) => {
-    // If it was a pinch/multi-touch gesture or zoomed in, do NOT swipe
-    if (isMultiTouch.current || zoomScale > 1) {
-      isMultiTouch.current = false;
+    // If the gesture was flagged as multi-touch or zoomed, do nothing
+    if (ignoreSwipe.current) {
       return;
     }
 
     const touchEndX = e.changedTouches[0].clientX;
     const distance = touchStartX.current - touchEndX;
 
-    // Strict 70px swipe threshold to prevent accidental triggers
-    if (distance > 70) {
+    // Higher threshold (80px) feels more "intentional" on mobile
+    if (distance > 80) {
       handleNext();
-    } else if (distance < -70) {
+    } else if (distance < -80) {
       handlePrev();
     }
   };
@@ -448,9 +459,10 @@ export default function GalleryClientView({
 
             {/* MAIN IMAGE VIEWPORT */}
             <div
-              className="w-full h-full flex items-center justify-center relative overflow-auto"
+              className="w-full h-full flex items-center justify-center relative overflow-auto touch-none"
               onClick={() => setHideControls((prev) => !prev)}
               onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
             >
               <img
