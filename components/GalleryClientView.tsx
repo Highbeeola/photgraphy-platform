@@ -2,7 +2,16 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronLeft, ChevronRight, Heart, Mail } from "lucide-react";
+import {
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  Mail,
+  Download,
+  Sun,
+  Moon,
+} from "lucide-react";
 import CopyLinkButton from "./CopyLinkButton";
 import FavoriteButton from "./FavoriteButton";
 import SmartImage from "@/components/SmartImage";
@@ -47,9 +56,10 @@ export default function GalleryClientView({
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [guestEmail, setGuestEmail] = useState("");
 
-  // UX State additions
+  // UX State
   const [hideControls, setHideControls] = useState(false);
   const [zoomScale, setZoomScale] = useState(1);
+  const [lightboxTheme, setLightboxTheme] = useState<"dark" | "light">("dark");
 
   // Reset zoom & UI controls when changing images or closing
   useEffect(() => {
@@ -154,6 +164,15 @@ export default function GalleryClientView({
 
     await executeBulkFavorite(savedEmail);
   };
+
+  // Helper function to extract filename safely
+  const getFileName = (path: string) => {
+    if (!path) return "";
+    const name = path.split("/").pop() || "";
+    return name.length > 20 ? `${name.substring(0, 17)}...` : name;
+  };
+
+  const isDark = lightboxTheme === "dark";
 
   return (
     <div className="min-h-screen bg-white">
@@ -265,7 +284,7 @@ export default function GalleryClientView({
         )}
       </AnimatePresence>
 
-      {/* OVERHAULED LIGHTBOX MODAL */}
+      {/* LIGHTBOX MODAL */}
       <AnimatePresence>
         {selectedImageIndex !== null && (
           <motion.div
@@ -273,37 +292,113 @@ export default function GalleryClientView({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            /* FIX #1: Uses 100dvh to seal black overlay behind mobile browser bottom bars */
-            className="fixed inset-0 z-[99999] bg-black w-full h-[100dvh] flex flex-col items-center justify-center select-none overflow-hidden touch-none"
+            className={`fixed inset-0 z-[99999] w-full h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] flex flex-col items-center justify-center select-none overflow-hidden touch-none transition-colors duration-300 ${
+              isDark ? "bg-black" : "bg-white"
+            }`}
           >
-            {/* TOP BAR (CONTROLS FADE OUT ON TAP) */}
+            {/* TOP BAR WITH TOP-RIGHT DOWNLOAD CTA */}
             <AnimatePresence>
               {!hideControls && (
                 <motion.div
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="absolute top-0 inset-x-0 p-6 flex justify-between items-center z-[100000] bg-gradient-to-b from-black/90 via-black/40 to-transparent"
+                  className={`absolute top-0 inset-x-0 p-4 md:p-6 pt-[calc(1rem+env(safe-area-inset-top))] flex justify-between items-center z-[100000] ${
+                    isDark
+                      ? "bg-gradient-to-b from-black/90 via-black/40 to-transparent"
+                      : "bg-gradient-to-b from-white/90 via-white/40 to-transparent"
+                  }`}
                 >
-                  <div className="flex items-center gap-4">
+                  {/* LEFT: CLOSE & METADATA */}
+                  <div className="flex items-center gap-3 md:gap-4">
                     <button
                       onClick={() => {
                         setSelectedImageIndex(null);
                         setZoomScale(1);
                       }}
-                      className="text-white/80 hover:text-white p-2 transition"
+                      className={`p-2 transition ${
+                        isDark
+                          ? "text-white/80 hover:text-white"
+                          : "text-slate-700 hover:text-black"
+                      }`}
                     >
-                      <X size={24} />
+                      <X size={22} />
                     </button>
-                    <span className="text-white/60 text-[10px] font-black uppercase tracking-widest">
-                      {selectedImageIndex + 1} / {photos.length}
-                    </span>
+
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`text-[10px] font-black uppercase tracking-widest ${
+                          isDark ? "text-white/60" : "text-slate-500"
+                        }`}
+                      >
+                        {selectedImageIndex + 1} / {photos.length}
+                      </span>
+
+                      {photos[selectedImageIndex]?.storage_path && (
+                        <>
+                          <span
+                            className={`text-[10px] ${
+                              isDark ? "text-white/20" : "text-slate-300"
+                            }`}
+                          >
+                            •
+                          </span>
+                          <span
+                            className={`text-[10px] font-mono tracking-tight hidden sm:inline-block ${
+                              isDark ? "text-white/40" : "text-slate-400"
+                            }`}
+                          >
+                            {getFileName(
+                              photos[selectedImageIndex].storage_path,
+                            )}
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  {/* RIGHT: CONTROLS & TOP-RIGHT DOWNLOAD BUTTON */}
+                  <div className="flex items-center gap-1.5 md:gap-2">
+                    {/* DOWNLOAD CTA (Option 1 Integration) */}
+                    {gallery.allow_download !== false && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDownload(photos[selectedImageIndex].url);
+                        }}
+                        className={`px-3.5 py-2 md:px-4 md:py-2 rounded-full font-bold text-[10px] uppercase tracking-widest flex items-center gap-1.5 transition-all shadow-md active:scale-95 ${
+                          isDark
+                            ? "bg-white/10 hover:bg-white/20 border border-white/20 text-white"
+                            : "bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200"
+                        }`}
+                        title="Download High-Res Photo"
+                      >
+                        <Download size={13} strokeWidth={2.5} />
+                        <span className="hidden sm:inline">Download</span>
+                      </button>
+                    )}
+
+                    {/* THEME TOGGLE */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setLightboxTheme((prev) =>
+                          prev === "dark" ? "light" : "dark",
+                        );
+                      }}
+                      className={`p-2 rounded-full transition ${
+                        isDark
+                          ? "bg-white/10 hover:bg-white/20 text-white"
+                          : "bg-slate-100 hover:bg-slate-200 text-slate-800"
+                      }`}
+                      title="Toggle background contrast"
+                    >
+                      {isDark ? <Sun size={15} /> : <Moon size={15} />}
+                    </button>
+
                     <CopyLinkButton
                       galleryId={gallery.id}
-                      variant="minimal-white"
+                      variant={isDark ? "minimal-white" : "minimal-dark"}
                     />
 
                     {gallery.allow_favorites !== false && (
@@ -313,7 +408,7 @@ export default function GalleryClientView({
                         isInitiallyFavorited={initialFavorites.some(
                           (f) => f.photo_id === photos[selectedImageIndex].id,
                         )}
-                        variant="glass"
+                        variant={isDark ? "glass" : "glass-dark"}
                       />
                     )}
                   </div>
@@ -323,12 +418,8 @@ export default function GalleryClientView({
 
             {/* MAIN FULL-SCREEN IMAGE CONTAINER */}
             <div
-              className="w-full h-full flex items-center justify-center relative px-2 py-12 md:p-6"
+              className="w-full h-[100dvh] flex items-center justify-center relative p-4 md:p-10 overflow-hidden"
               onClick={() => setHideControls((prev) => !prev)}
-              onDoubleClick={(e) => {
-                e.stopPropagation();
-                setZoomScale((prev) => (prev === 1 ? 2.5 : 1));
-              }}
             >
               <AnimatePresence initial={false} mode="wait">
                 <motion.img
@@ -338,20 +429,25 @@ export default function GalleryClientView({
                   animate={{ opacity: 1, scale: zoomScale }}
                   exit={{ opacity: 0, scale: 0.98 }}
                   transition={{ duration: 0.25, ease: "easeInOut" }}
-                  drag={zoomScale === 1 ? "x" : true}
-                  dragConstraints={
-                    zoomScale === 1
-                      ? { left: 0, right: 0 }
-                      : { left: -300, right: 300, top: -300, bottom: 300 }
-                  }
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    setZoomScale((prev) => (prev === 1 ? 1.8 : 1)); // Lowered zoom scale for desktop
+                  }}
+                  drag={zoomScale > 1}
+                  dragConstraints={{
+                    left: -200,
+                    right: 200,
+                    top: -200,
+                    bottom: 200,
+                  }}
                   onDragEnd={(_, info) => {
                     if (zoomScale === 1) {
                       if (info.offset.x < -60) handleNext();
                       if (info.offset.x > 60) handlePrev();
                     }
                   }}
-                  /* FIX #3: Maximize portrait dimensions vertically while leaving room for floating controls */
-                  className="max-w-full max-h-[88dvh] md:max-h-[92vh] w-auto h-auto object-contain cursor-grab active:cursor-grabbing pointer-events-auto transition-transform duration-200 shadow-2xl"
+                  /* STRICT ASPECT CONSTRAINTS FOR DESKTOP */
+                  className="max-w-full max-h-[82vh] w-auto h-auto object-contain cursor-grab active:cursor-grabbing pointer-events-auto transition-transform duration-200 shadow-2xl block mx-auto"
                   alt="Preview"
                 />
               </AnimatePresence>
@@ -372,7 +468,11 @@ export default function GalleryClientView({
                         e.stopPropagation();
                         handlePrev();
                       }}
-                      className="absolute left-6 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-all z-[100000] p-4"
+                      className={`absolute left-6 top-1/2 -translate-y-1/2 transition-all z-[100000] p-4 ${
+                        isDark
+                          ? "text-white/40 hover:text-white"
+                          : "text-slate-400 hover:text-black"
+                      }`}
                     >
                       <ChevronLeft size={48} strokeWidth={1} />
                     </button>
@@ -383,33 +483,15 @@ export default function GalleryClientView({
                         e.stopPropagation();
                         handleNext();
                       }}
-                      className="absolute right-6 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-all z-[100000] p-4"
+                      className={`absolute right-6 top-1/2 -translate-y-1/2 transition-all z-[100000] p-4 ${
+                        isDark
+                          ? "text-white/40 hover:text-white"
+                          : "text-slate-400 hover:text-black"
+                      }`}
                     >
                       <ChevronRight size={48} strokeWidth={1} />
                     </button>
                   )}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* DOWNLOAD BUTTON */}
-            <AnimatePresence>
-              {!hideControls && gallery.allow_download !== false && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 20 }}
-                  className="absolute bottom-6 md:bottom-8 z-[100000]"
-                >
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDownload(photos[selectedImageIndex].url);
-                    }}
-                    className="bg-white/90 backdrop-blur-md text-black px-8 py-3.5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl active:scale-95 transition"
-                  >
-                    Download High-Res
-                  </button>
                 </motion.div>
               )}
             </AnimatePresence>

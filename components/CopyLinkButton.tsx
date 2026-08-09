@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 interface CopyLinkButtonProps {
   galleryId: string;
-  variant?: "default" | "minimal-white";
+  variant?: "default" | "minimal-white" | "minimal-dark";
 }
 
 export default function CopyLinkButton({
@@ -24,7 +24,7 @@ export default function CopyLinkButton({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  // Minimal white variant for the Lightbox overlay
+  // Minimal white variant for Dark Lightbox overlay
   if (variant === "minimal-white") {
     return (
       <button
@@ -34,6 +34,23 @@ export default function CopyLinkButton({
       >
         {copied ? (
           <Check size={18} className="text-emerald-400" />
+        ) : (
+          <Share2 size={18} />
+        )}
+      </button>
+    );
+  }
+
+  // Minimal dark variant for Light Lightbox overlay
+  if (variant === "minimal-dark") {
+    return (
+      <button
+        onClick={copy}
+        className="text-slate-700 hover:text-black p-2 transition flex items-center gap-2"
+        aria-label="Share Gallery"
+      >
+        {copied ? (
+          <Check size={18} className="text-emerald-600" />
         ) : (
           <Share2 size={18} />
         )}
