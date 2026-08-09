@@ -63,7 +63,7 @@ export default function GalleryClientView({
 
   // Touch swipe state
   const touchStartX = useRef<number>(0);
-  const touchEndX = useRef<number>(0);
+  const isMultiTouch = useRef<boolean>(false);
 
   // Reset zoom scale when index changes
   useEffect(() => {
@@ -114,24 +114,31 @@ export default function GalleryClientView({
     setZoomScale((prev) => (prev === 1 ? 2.2 : 1));
   };
 
-  // Touch handlers for direct touch-swipe navigation
+  // Touch handlers (guarded against multi-touch pinch)
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (e.touches.length === 1) {
-      touchStartX.current = e.touches[0].clientX;
+    if (e.touches.length > 1) {
+      // Flag multi-touch (pinch) so swipe handler ignores it
+      isMultiTouch.current = true;
+      return;
     }
+    isMultiTouch.current = false;
+    touchStartX.current = e.touches[0].clientX;
   };
 
   const handleTouchEnd = (e: React.TouchEvent) => {
-    // Only trigger swipe when unzoomed
-    if (zoomScale > 1) return;
+    // If it was a pinch/multi-touch gesture or zoomed in, do NOT swipe
+    if (isMultiTouch.current || zoomScale > 1) {
+      isMultiTouch.current = false;
+      return;
+    }
 
-    touchEndX.current = e.changedTouches[0].clientX;
-    const distance = touchStartX.current - touchEndX.current;
+    const touchEndX = e.changedTouches[0].clientX;
+    const distance = touchStartX.current - touchEndX;
 
-    // Minimum 50px swipe threshold
-    if (distance > 50) {
+    // Strict 70px swipe threshold to prevent accidental triggers
+    if (distance > 70) {
       handleNext();
-    } else if (distance < -50) {
+    } else if (distance < -70) {
       handlePrev();
     }
   };
@@ -439,7 +446,7 @@ export default function GalleryClientView({
               )}
             </AnimatePresence>
 
-            {/* MAIN IMAGE VIEWPORT (WITH DIRECT TOUCH-SWIPE LISTENERS) */}
+            {/* MAIN IMAGE VIEWPORT */}
             <div
               className="w-full h-full flex items-center justify-center relative overflow-auto"
               onClick={() => setHideControls((prev) => !prev)}
@@ -457,7 +464,7 @@ export default function GalleryClientView({
                   transform: `scale(${zoomScale})`,
                   transformOrigin: "center center",
                 }}
-                className="w-full h-auto max-h-[88dvh] md:max-h-[85vh] object-contain transition-transform duration-200 ease-out select-none touch-manipulation block mx-auto"
+                className="w-full h-auto max-h-[88dvh] md:max-h-[85vh] object-contain transition-transform duration-200 ease-out select-none touch-pan-x touch-pan-y block mx-auto"
                 alt="Preview"
               />
             </div>
