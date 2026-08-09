@@ -273,7 +273,8 @@ export default function GalleryClientView({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-[99999] bg-black w-screen h-screen flex flex-col items-center justify-center select-none overflow-hidden"
+            /* FIX #1: Uses 100dvh to seal black overlay behind mobile browser bottom bars */
+            className="fixed inset-0 z-[99999] bg-black w-full h-[100dvh] flex flex-col items-center justify-center select-none overflow-hidden touch-none"
           >
             {/* TOP BAR (CONTROLS FADE OUT ON TAP) */}
             <AnimatePresence>
@@ -322,7 +323,7 @@ export default function GalleryClientView({
 
             {/* MAIN FULL-SCREEN IMAGE CONTAINER */}
             <div
-              className="w-full h-full flex items-center justify-center relative touch-none"
+              className="w-full h-full flex items-center justify-center relative px-2 py-12 md:p-6"
               onClick={() => setHideControls((prev) => !prev)}
               onDoubleClick={(e) => {
                 e.stopPropagation();
@@ -349,7 +350,8 @@ export default function GalleryClientView({
                       if (info.offset.x > 60) handlePrev();
                     }
                   }}
-                  className="max-w-full max-h-full w-full h-full object-contain cursor-grab active:cursor-grabbing pointer-events-auto transition-transform duration-200"
+                  /* FIX #3: Maximize portrait dimensions vertically while leaving room for floating controls */
+                  className="max-w-full max-h-[88dvh] md:max-h-[92vh] w-auto h-auto object-contain cursor-grab active:cursor-grabbing pointer-events-auto transition-transform duration-200 shadow-2xl"
                   alt="Preview"
                 />
               </AnimatePresence>
@@ -397,7 +399,7 @@ export default function GalleryClientView({
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 20 }}
-                  className="absolute bottom-8 z-[100000]"
+                  className="absolute bottom-6 md:bottom-8 z-[100000]"
                 >
                   <button
                     onClick={(e) => {
