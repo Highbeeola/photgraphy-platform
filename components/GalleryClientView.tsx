@@ -165,7 +165,6 @@ export default function GalleryClientView({
     await executeBulkFavorite(savedEmail);
   };
 
-  // Helper function to extract filename safely
   const getFileName = (path: string) => {
     if (!path) return "";
     const name = path.split("/").pop() || "";
@@ -176,7 +175,7 @@ export default function GalleryClientView({
 
   return (
     <div className="min-h-screen bg-white">
-      {/* SINGLE HEADER & CONTROLS SECTION */}
+      {/* HEADER SECTION */}
       <div className="text-center py-20 space-y-6">
         <h1 className="text-5xl md:text-8xl font-serif italic tracking-tighter">
           {gallery.title}
@@ -186,7 +185,6 @@ export default function GalleryClientView({
         </p>
 
         <div className="flex justify-center items-center gap-8 pt-4">
-          {/* SHARE BUTTON */}
           <div className="flex flex-col items-center gap-2 group cursor-pointer">
             <CopyLinkButton galleryId={gallery.id} />
             <span className="text-[9px] uppercase tracking-widest text-slate-300 group-hover:text-slate-900 transition">
@@ -194,7 +192,6 @@ export default function GalleryClientView({
             </span>
           </div>
 
-          {/* GRID FAVORITE ALL BUTTON */}
           {gallery.allow_favorites !== false && (
             <button
               onClick={handleFavoriteAll}
@@ -296,7 +293,7 @@ export default function GalleryClientView({
               isDark ? "bg-black" : "bg-white"
             }`}
           >
-            {/* TOP BAR WITH TOP-RIGHT DOWNLOAD CTA */}
+            {/* TOP BAR */}
             <AnimatePresence>
               {!hideControls && (
                 <motion.div
@@ -309,7 +306,6 @@ export default function GalleryClientView({
                       : "bg-gradient-to-b from-white/90 via-white/40 to-transparent"
                   }`}
                 >
-                  {/* LEFT: CLOSE & METADATA */}
                   <div className="flex items-center gap-3 md:gap-4">
                     <button
                       onClick={() => {
@@ -357,9 +353,7 @@ export default function GalleryClientView({
                     </div>
                   </div>
 
-                  {/* RIGHT: CONTROLS & TOP-RIGHT DOWNLOAD BUTTON */}
                   <div className="flex items-center gap-1.5 md:gap-2">
-                    {/* DOWNLOAD CTA (Option 1 Integration) */}
                     {gallery.allow_download !== false && (
                       <button
                         onClick={(e) => {
@@ -378,7 +372,6 @@ export default function GalleryClientView({
                       </button>
                     )}
 
-                    {/* THEME TOGGLE */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -416,51 +409,49 @@ export default function GalleryClientView({
               )}
             </AnimatePresence>
 
-            {/* MAIN FULL-SCREEN IMAGE CONTAINER */}
+            {/* MAIN IMAGE CONTAINER */}
             <div
-              className="w-full h-[100dvh] flex items-center justify-center relative p-4 md:p-10 overflow-hidden"
+              className="w-full h-full flex items-center justify-center relative overflow-hidden"
               onClick={() => setHideControls((prev) => !prev)}
             >
               <AnimatePresence initial={false} mode="wait">
                 <motion.img
                   key={selectedImageIndex}
                   src={photos[selectedImageIndex].url}
-                  initial={{ opacity: 0, scale: 0.98 }}
+                  initial={{ opacity: 0 }}
                   animate={{ opacity: 1, scale: zoomScale }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
                   onDoubleClick={(e) => {
                     e.stopPropagation();
-                    setZoomScale((prev) => (prev === 1 ? 1.8 : 1)); // Lowered zoom scale for desktop
+                    setZoomScale((prev) => (prev === 1 ? 2 : 1));
                   }}
-                  drag={zoomScale > 1}
-                  dragConstraints={{
-                    left: -200,
-                    right: 200,
-                    top: -200,
-                    bottom: 200,
-                  }}
+                  drag={zoomScale > 1 ? true : "x"}
+                  dragConstraints={
+                    zoomScale > 1
+                      ? { left: -300, right: 300, top: -300, bottom: 300 }
+                      : { left: 0, right: 0 }
+                  }
                   onDragEnd={(_, info) => {
                     if (zoomScale === 1) {
-                      if (info.offset.x < -60) handleNext();
-                      if (info.offset.x > 60) handlePrev();
+                      if (info.offset.x < -40) handleNext();
+                      if (info.offset.x > 40) handlePrev();
                     }
                   }}
-                  /* STRICT ASPECT CONSTRAINTS FOR DESKTOP */
-                  className="max-w-full max-h-[82vh] w-auto h-auto object-contain cursor-grab active:cursor-grabbing pointer-events-auto transition-transform duration-200 shadow-2xl block mx-auto"
+                  /* w-full fills width edge-to-edge; object-cover on mobile fits width fully */
+                  className="w-full h-auto max-h-[88dvh] md:max-h-[85vh] object-contain md:object-contain cursor-grab active:cursor-grabbing pointer-events-auto transition-transform duration-200"
                   alt="Preview"
                 />
               </AnimatePresence>
             </div>
 
-            {/* NAVIGATION ARROWS */}
+            {/* VISIBLE DIRECTION ARROWS (MOBILE & DESKTOP) */}
             <AnimatePresence>
               {!hideControls && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="hidden md:block"
                 >
                   {selectedImageIndex > 0 && (
                     <button
@@ -468,13 +459,14 @@ export default function GalleryClientView({
                         e.stopPropagation();
                         handlePrev();
                       }}
-                      className={`absolute left-6 top-1/2 -translate-y-1/2 transition-all z-[100000] p-4 ${
+                      className={`absolute left-2 md:left-6 top-1/2 -translate-y-1/2 transition-all z-[100000] p-2 md:p-4 rounded-full backdrop-blur-sm ${
                         isDark
-                          ? "text-white/40 hover:text-white"
-                          : "text-slate-400 hover:text-black"
+                          ? "bg-black/30 text-white/70 hover:text-white"
+                          : "bg-white/30 text-slate-700 hover:text-black"
                       }`}
+                      aria-label="Previous photo"
                     >
-                      <ChevronLeft size={48} strokeWidth={1} />
+                      <ChevronLeft size={28} className="md:w-10 md:h-10" />
                     </button>
                   )}
                   {selectedImageIndex < photos.length - 1 && (
@@ -483,13 +475,14 @@ export default function GalleryClientView({
                         e.stopPropagation();
                         handleNext();
                       }}
-                      className={`absolute right-6 top-1/2 -translate-y-1/2 transition-all z-[100000] p-4 ${
+                      className={`absolute right-2 md:right-6 top-1/2 -translate-y-1/2 transition-all z-[100000] p-2 md:p-4 rounded-full backdrop-blur-sm ${
                         isDark
-                          ? "text-white/40 hover:text-white"
-                          : "text-slate-400 hover:text-black"
+                          ? "bg-black/30 text-white/70 hover:text-white"
+                          : "bg-white/30 text-slate-700 hover:text-black"
                       }`}
+                      aria-label="Next photo"
                     >
-                      <ChevronRight size={48} strokeWidth={1} />
+                      <ChevronRight size={28} className="md:w-10 md:h-10" />
                     </button>
                   )}
                 </motion.div>
