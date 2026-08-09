@@ -61,7 +61,7 @@ export default function GalleryClientView({
   const [zoomScale, setZoomScale] = useState(1);
   const [lightboxTheme, setLightboxTheme] = useState<"dark" | "light">("dark");
 
-  // Reset zoom & UI controls when changing images or closing
+  // Reset zoom when changing images or closing modal
   useEffect(() => {
     setZoomScale(1);
   }, [selectedImageIndex]);
@@ -289,7 +289,7 @@ export default function GalleryClientView({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className={`fixed inset-0 z-[99999] w-full h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] flex flex-col items-center justify-center select-none overflow-hidden touch-none transition-colors duration-300 ${
+            className={`fixed inset-0 z-[99999] w-full h-[100dvh] pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] flex flex-col items-center justify-center select-none overflow-hidden transition-colors duration-300 ${
               isDark ? "bg-black" : "bg-white"
             }`}
           >
@@ -409,43 +409,44 @@ export default function GalleryClientView({
               )}
             </AnimatePresence>
 
-            {/* MAIN IMAGE CONTAINER */}
+            {/* MAIN IMAGE CONTAINER WITH NATIVE PINCH-ZOOM AND DIRECT PANNING */}
             <div
-              className="w-full h-full flex items-center justify-center relative overflow-hidden"
+              className="w-full h-full flex items-center justify-center relative overflow-hidden touch-pan-x touch-pan-y"
               onClick={() => setHideControls((prev) => !prev)}
             >
               <AnimatePresence initial={false} mode="wait">
                 <motion.img
                   key={selectedImageIndex}
                   src={photos[selectedImageIndex].url}
-                  initial={{ opacity: 0 }}
+                  initial={{ opacity: 0, scale: 1, x: 0, y: 0 }}
                   animate={{ opacity: 1, scale: zoomScale }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2 }}
+                  transition={{ duration: 0.2, ease: "easeInOut" }}
                   onDoubleClick={(e) => {
                     e.stopPropagation();
-                    setZoomScale((prev) => (prev === 1 ? 2 : 1));
+                    setZoomScale((prev) => (prev === 1 ? 2.2 : 1));
                   }}
                   drag={zoomScale > 1 ? true : "x"}
+                  dragMomentum={false} // Disables sliding/gliding after dragging
+                  dragElastic={0.1}
                   dragConstraints={
                     zoomScale > 1
-                      ? { left: -300, right: 300, top: -300, bottom: 300 }
+                      ? { left: -250, right: 250, top: -250, bottom: 250 }
                       : { left: 0, right: 0 }
                   }
                   onDragEnd={(_, info) => {
                     if (zoomScale === 1) {
-                      if (info.offset.x < -40) handleNext();
-                      if (info.offset.x > 40) handlePrev();
+                      if (info.offset.x < -50) handleNext();
+                      if (info.offset.x > 50) handlePrev();
                     }
                   }}
-                  /* w-full fills width edge-to-edge; object-cover on mobile fits width fully */
-                  className="w-full h-auto max-h-[88dvh] md:max-h-[85vh] object-contain md:object-contain cursor-grab active:cursor-grabbing pointer-events-auto transition-transform duration-200"
+                  className="w-full h-auto max-h-[88dvh] md:max-h-[85vh] object-contain cursor-grab active:cursor-grabbing pointer-events-auto"
                   alt="Preview"
                 />
               </AnimatePresence>
             </div>
 
-            {/* VISIBLE DIRECTION ARROWS (MOBILE & DESKTOP) */}
+            {/* OVERLAY NAVIGATION ARROWS */}
             <AnimatePresence>
               {!hideControls && (
                 <motion.div
