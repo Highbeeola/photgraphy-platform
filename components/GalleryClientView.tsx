@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -59,13 +59,12 @@ export default function GalleryClientView({
   // Lightbox UI state
   const [hideControls, setHideControls] = useState(false);
   const [zoomScale, setZoomScale] = useState(1);
-  const [panPosition, setPanPosition] = useState({ x: 0, y: 0 });
   const [lightboxTheme, setLightboxTheme] = useState<"dark" | "light">("dark");
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Reset zoom & pan when image changes or closes
+  // Reset zoom scale when index changes
   useEffect(() => {
     setZoomScale(1);
-    setPanPosition({ x: 0, y: 0 });
   }, [selectedImageIndex]);
 
   // Lock body scroll when Lightbox is active
@@ -109,14 +108,7 @@ export default function GalleryClientView({
   };
 
   const handleToggleZoom = () => {
-    if (zoomScale > 1) {
-      // Unzoom: Reset scale and force pan back to center (0, 0)
-      setZoomScale(1);
-      setPanPosition({ x: 0, y: 0 });
-    } else {
-      // Zoom in
-      setZoomScale(2.2);
-    }
+    setZoomScale((prev) => (prev === 1 ? 2.2 : 1));
   };
 
   const handleDownload = async (originalUrl: string) => {
@@ -324,7 +316,6 @@ export default function GalleryClientView({
                       onClick={() => {
                         setSelectedImageIndex(null);
                         setZoomScale(1);
-                        setPanPosition({ x: 0, y: 0 });
                       }}
                       className={`p-2 transition ${
                         isDark
@@ -423,57 +414,27 @@ export default function GalleryClientView({
               )}
             </AnimatePresence>
 
-            {/* MAIN IMAGE CONTAINER */}
+            {/* MAIN IMAGE VIEWPORT */}
             <div
-              className="w-full h-full flex items-center justify-center relative overflow-hidden"
+              ref={containerRef}
+              className="w-full h-full flex items-center justify-center relative overflow-auto"
               onClick={() => setHideControls((prev) => !prev)}
             >
-              <AnimatePresence initial={false} mode="wait">
-                <motion.img
-                  key={selectedImageIndex}
-                  src={photos[selectedImageIndex].url}
-                  initial={{ opacity: 0, scale: 1, x: 0, y: 0 }}
-                  animate={{
-                    opacity: 1,
-                    scale: zoomScale,
-                    x: zoomScale > 1 ? panPosition.x : 0,
-                    y: zoomScale > 1 ? panPosition.y : 0,
-                  }}
-                  exit={{ opacity: 0 }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 300,
-                    damping: 30,
-                  }}
-                  onDoubleClick={(e) => {
-                    e.stopPropagation();
-                    handleToggleZoom();
-                  }}
-                  drag={zoomScale > 1 ? true : "x"}
-                  dragMomentum={false}
-                  dragElastic={0.05}
-                  dragConstraints={
-                    zoomScale > 1
-                      ? { left: -250, right: 250, top: -250, bottom: 250 }
-                      : { left: 0, right: 0 }
-                  }
-                  onDragEnd={(_, info) => {
-                    if (zoomScale > 1) {
-                      // Update pan position state so it persists during zoom
-                      setPanPosition((prev) => ({
-                        x: prev.x + info.offset.x,
-                        y: prev.y + info.offset.y,
-                      }));
-                    } else {
-                      // Swipe navigation when unzoomed
-                      if (info.offset.x < -50) handleNext();
-                      if (info.offset.x > 50) handlePrev();
-                    }
-                  }}
-                  className="w-full h-auto max-h-[88dvh] md:max-h-[85vh] object-contain cursor-grab active:cursor-grabbing pointer-events-auto touch-manipulation"
-                  alt="Preview"
-                />
-              </AnimatePresence>
+              {/* Standard HTML <img> enables native browser pinch-to-zoom without blackouts */}
+              <img
+                key={selectedImageIndex}
+                src={photos[selectedImageIndex].url}
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleZoom();
+                }}
+                style={{
+                  transform: `scale(${zoomScale})`,
+                  transformOrigin: "center center",
+                }}
+                className="w-full h-auto max-h-[88dvh] md:max-h-[85vh] object-contain transition-transform duration-200 ease-out select-none touch-manipulation block mx-auto"
+                alt="Preview"
+              />
             </div>
 
             {/* OVERLAY NAVIGATION ARROWS */}
