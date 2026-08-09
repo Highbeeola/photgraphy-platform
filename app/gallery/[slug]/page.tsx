@@ -81,7 +81,7 @@ export default async function ClientGalleryPage({
             alt={gallery.title}
             fill
             priority
-            className="object-cover object-[50%_20%] opacity-60 animate-reveal"
+            className="object-cover object-top opacity-60 animate-reveal"
           />
         )}
 
