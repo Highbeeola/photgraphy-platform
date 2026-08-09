@@ -56,14 +56,16 @@ export default function GalleryClientView({
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [guestEmail, setGuestEmail] = useState("");
 
-  // UX State
+  // Lightbox UI state
   const [hideControls, setHideControls] = useState(false);
   const [zoomScale, setZoomScale] = useState(1);
+  const [panPosition, setPanPosition] = useState({ x: 0, y: 0 });
   const [lightboxTheme, setLightboxTheme] = useState<"dark" | "light">("dark");
 
-  // Reset zoom when changing images or closing modal
+  // Reset zoom & pan when image changes or closes
   useEffect(() => {
     setZoomScale(1);
+    setPanPosition({ x: 0, y: 0 });
   }, [selectedImageIndex]);
 
   // Lock body scroll when Lightbox is active
@@ -103,6 +105,17 @@ export default function GalleryClientView({
   const handlePrev = () => {
     if (selectedImageIndex !== null && selectedImageIndex > 0) {
       setSelectedImageIndex(selectedImageIndex - 1);
+    }
+  };
+
+  const handleToggleZoom = () => {
+    if (zoomScale > 1) {
+      // Unzoom: Reset scale and force pan back to center (0, 0)
+      setZoomScale(1);
+      setPanPosition({ x: 0, y: 0 });
+    } else {
+      // Zoom in
+      setZoomScale(2.2);
     }
   };
 
@@ -311,6 +324,7 @@ export default function GalleryClientView({
                       onClick={() => {
                         setSelectedImageIndex(null);
                         setZoomScale(1);
+                        setPanPosition({ x: 0, y: 0 });
                       }}
                       className={`p-2 transition ${
                         isDark
@@ -409,9 +423,9 @@ export default function GalleryClientView({
               )}
             </AnimatePresence>
 
-            {/* MAIN IMAGE CONTAINER WITH NATIVE PINCH-ZOOM AND DIRECT PANNING */}
+            {/* MAIN IMAGE CONTAINER */}
             <div
-              className="w-full h-full flex items-center justify-center relative overflow-hidden touch-pan-x touch-pan-y"
+              className="w-full h-full flex items-center justify-center relative overflow-hidden"
               onClick={() => setHideControls((prev) => !prev)}
             >
               <AnimatePresence initial={false} mode="wait">
@@ -419,28 +433,44 @@ export default function GalleryClientView({
                   key={selectedImageIndex}
                   src={photos[selectedImageIndex].url}
                   initial={{ opacity: 0, scale: 1, x: 0, y: 0 }}
-                  animate={{ opacity: 1, scale: zoomScale }}
+                  animate={{
+                    opacity: 1,
+                    scale: zoomScale,
+                    x: zoomScale > 1 ? panPosition.x : 0,
+                    y: zoomScale > 1 ? panPosition.y : 0,
+                  }}
                   exit={{ opacity: 0 }}
-                  transition={{ duration: 0.2, ease: "easeInOut" }}
+                  transition={{
+                    type: "spring",
+                    stiffness: 300,
+                    damping: 30,
+                  }}
                   onDoubleClick={(e) => {
                     e.stopPropagation();
-                    setZoomScale((prev) => (prev === 1 ? 2.2 : 1));
+                    handleToggleZoom();
                   }}
                   drag={zoomScale > 1 ? true : "x"}
-                  dragMomentum={false} // Disables sliding/gliding after dragging
-                  dragElastic={0.1}
+                  dragMomentum={false}
+                  dragElastic={0.05}
                   dragConstraints={
                     zoomScale > 1
                       ? { left: -250, right: 250, top: -250, bottom: 250 }
                       : { left: 0, right: 0 }
                   }
                   onDragEnd={(_, info) => {
-                    if (zoomScale === 1) {
+                    if (zoomScale > 1) {
+                      // Update pan position state so it persists during zoom
+                      setPanPosition((prev) => ({
+                        x: prev.x + info.offset.x,
+                        y: prev.y + info.offset.y,
+                      }));
+                    } else {
+                      // Swipe navigation when unzoomed
                       if (info.offset.x < -50) handleNext();
                       if (info.offset.x > 50) handlePrev();
                     }
                   }}
-                  className="w-full h-auto max-h-[88dvh] md:max-h-[85vh] object-contain cursor-grab active:cursor-grabbing pointer-events-auto"
+                  className="w-full h-auto max-h-[88dvh] md:max-h-[85vh] object-contain cursor-grab active:cursor-grabbing pointer-events-auto touch-manipulation"
                   alt="Preview"
                 />
               </AnimatePresence>
