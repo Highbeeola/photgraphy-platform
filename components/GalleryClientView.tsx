@@ -60,7 +60,10 @@ export default function GalleryClientView({
   const [hideControls, setHideControls] = useState(false);
   const [zoomScale, setZoomScale] = useState(1);
   const [lightboxTheme, setLightboxTheme] = useState<"dark" | "light">("dark");
-  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Touch swipe state
+  const touchStartX = useRef<number>(0);
+  const touchEndX = useRef<number>(0);
 
   // Reset zoom scale when index changes
   useEffect(() => {
@@ -109,6 +112,28 @@ export default function GalleryClientView({
 
   const handleToggleZoom = () => {
     setZoomScale((prev) => (prev === 1 ? 2.2 : 1));
+  };
+
+  // Touch handlers for direct touch-swipe navigation
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      touchStartX.current = e.touches[0].clientX;
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    // Only trigger swipe when unzoomed
+    if (zoomScale > 1) return;
+
+    touchEndX.current = e.changedTouches[0].clientX;
+    const distance = touchStartX.current - touchEndX.current;
+
+    // Minimum 50px swipe threshold
+    if (distance > 50) {
+      handleNext();
+    } else if (distance < -50) {
+      handlePrev();
+    }
   };
 
   const handleDownload = async (originalUrl: string) => {
@@ -414,13 +439,13 @@ export default function GalleryClientView({
               )}
             </AnimatePresence>
 
-            {/* MAIN IMAGE VIEWPORT */}
+            {/* MAIN IMAGE VIEWPORT (WITH DIRECT TOUCH-SWIPE LISTENERS) */}
             <div
-              ref={containerRef}
               className="w-full h-full flex items-center justify-center relative overflow-auto"
               onClick={() => setHideControls((prev) => !prev)}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
             >
-              {/* Standard HTML <img> enables native browser pinch-to-zoom without blackouts */}
               <img
                 key={selectedImageIndex}
                 src={photos[selectedImageIndex].url}
