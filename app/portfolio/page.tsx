@@ -10,14 +10,12 @@ export default async function PortfolioPage() {
 
   const supabase = await createClient();
 
-  // Fetch public galleries ordered by creation date
   const { data: galleries } = await supabase
     .from("galleries")
     .select(`*, photos (storage_path)`)
     .eq("is_public", true)
     .order("created_at", { ascending: false });
 
-  // DYNAMIC CATEGORIES: Automatically extracts unique categories from the database
   const categories = Array.from(
     new Set(galleries?.map((g) => g.category).filter(Boolean)),
   );
@@ -27,7 +25,7 @@ export default async function PortfolioPage() {
       <nav className="p-8 md:p-12 flex justify-center">
         <Link
           href="/"
-          className="text-xl font-serif italic tracking-tighter uppercase"
+          className="text-xl font-serif italic tracking-tighter uppercase font-bold"
         >
           Dara Pixel
         </Link>
@@ -47,11 +45,12 @@ export default async function PortfolioPage() {
 
           return (
             <section key={cat} id={cat.toLowerCase().replace(/\s+/g, "-")}>
-              <h2 className="text-[10px] uppercase tracking-[0.5em] text-slate-400 font-bold mb-10 text-center">
+              {/* BOLDER CATEGORY HEADER */}
+              <h2 className="text-xs md:text-sm uppercase tracking-[0.6em] text-slate-900 font-black mb-10 text-center">
                 {cat}s
               </h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-start">
                 {catGalleries.map((gallery) => {
                   const coverPath =
                     gallery.cover_image_path ||
@@ -66,25 +65,28 @@ export default async function PortfolioPage() {
                     : null;
 
                   return (
+                    /* ENTIRE CARD WRAPPED IN LINK (CLICKABLE IMAGE + TEXT) */
                     <Link
                       key={gallery.id}
                       href={`/gallery/${gallery.slug}`}
-                      className="group space-y-6"
+                      className="group block space-y-4 cursor-pointer"
                     >
-                      <div className="aspect-[3/2] overflow-hidden bg-slate-200 shadow-sm transition-all duration-700 group-hover:shadow-2xl">
+                      {/* FULL UNCROPPED IMAGE CONTAINER */}
+                      <div className="w-full overflow-hidden rounded-xl bg-slate-100 shadow-sm transition-all duration-500 group-hover:shadow-xl">
                         {coverUrl && (
                           <img
                             src={coverUrl}
                             alt={gallery.title}
-                            className="w-full h-full object-cover object-top transition duration-700 group-hover:scale-105"
+                            className="w-full h-auto object-contain transition duration-500 group-hover:scale-[1.02]"
                           />
                         )}
                       </div>
-                      <div className="text-center">
-                        <h3 className="text-2xl font-serif italic">
+
+                      <div className="text-center space-y-1">
+                        <h3 className="text-2xl font-serif italic group-hover:text-slate-600 transition">
                           {gallery.title}
                         </h3>
-                        <p className="text-[10px] uppercase tracking-widest text-slate-400 mt-2">
+                        <p className="text-[10px] uppercase tracking-widest text-slate-400">
                           {gallery.event_date
                             ? new Date(gallery.event_date).toLocaleDateString(
                                 "en-US",

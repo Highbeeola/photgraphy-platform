@@ -47,6 +47,15 @@ export default function GalleryClientView({
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [guestEmail, setGuestEmail] = useState("");
 
+  // UX State additions
+  const [hideControls, setHideControls] = useState(false);
+  const [zoomScale, setZoomScale] = useState(1);
+
+  // Reset zoom & UI controls when changing images or closing
+  useEffect(() => {
+    setZoomScale(1);
+  }, [selectedImageIndex]);
+
   // Lock body scroll when Lightbox is active
   useEffect(() => {
     if (selectedImageIndex !== null) {
@@ -55,6 +64,7 @@ export default function GalleryClientView({
     } else {
       document.body.style.overflow = "unset";
       document.body.style.height = "auto";
+      setHideControls(false);
     }
     return () => {
       document.body.style.overflow = "unset";
@@ -109,7 +119,6 @@ export default function GalleryClientView({
 
     toast.promise(
       async () => {
-        // Pass photoIds, email, gallery.id, AND slug:
         const result = await bulkFavorite(photoIds, email, gallery.id, slug);
 
         if (result?.error) {
@@ -256,97 +265,152 @@ export default function GalleryClientView({
         )}
       </AnimatePresence>
 
-      {/* LIGHTBOX MODAL */}
+      {/* OVERHAULED LIGHTBOX MODAL */}
       <AnimatePresence>
         {selectedImageIndex !== null && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9999] bg-black w-full h-screen flex flex-col items-center justify-center touch-none select-none"
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[99999] bg-black w-screen h-screen flex flex-col items-center justify-center select-none overflow-hidden"
           >
-            {/* TOP BAR */}
-            <div className="absolute top-0 inset-x-0 p-6 flex justify-between items-center z-[100] bg-gradient-to-b from-black/80 to-transparent">
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setSelectedImageIndex(null)}
-                  className="text-white/70 hover:text-white p-2 transition"
+            {/* TOP BAR (CONTROLS FADE OUT ON TAP) */}
+            <AnimatePresence>
+              {!hideControls && (
+                <motion.div
+                  initial={{ opacity: 0, y: -20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="absolute top-0 inset-x-0 p-6 flex justify-between items-center z-[100000] bg-gradient-to-b from-black/90 via-black/40 to-transparent"
                 >
-                  <X size={24} />
-                </button>
-                <span className="text-white/40 text-[10px] font-black uppercase tracking-widest">
-                  {selectedImageIndex + 1} / {photos.length}
-                </span>
-              </div>
+                  <div className="flex items-center gap-4">
+                    <button
+                      onClick={() => {
+                        setSelectedImageIndex(null);
+                        setZoomScale(1);
+                      }}
+                      className="text-white/80 hover:text-white p-2 transition"
+                    >
+                      <X size={24} />
+                    </button>
+                    <span className="text-white/60 text-[10px] font-black uppercase tracking-widest">
+                      {selectedImageIndex + 1} / {photos.length}
+                    </span>
+                  </div>
 
-              <div className="flex items-center gap-2">
-                <CopyLinkButton
-                  galleryId={gallery.id}
-                  variant="minimal-white"
-                />
+                  <div className="flex items-center gap-2">
+                    <CopyLinkButton
+                      galleryId={gallery.id}
+                      variant="minimal-white"
+                    />
 
-                {gallery.allow_favorites !== false && (
-                  <FavoriteButton
-                    photoId={photos[selectedImageIndex].id}
-                    galleryId={gallery.id}
-                    isInitiallyFavorited={initialFavorites.some(
-                      (f) => f.photo_id === photos[selectedImageIndex].id,
+                    {gallery.allow_favorites !== false && (
+                      <FavoriteButton
+                        photoId={photos[selectedImageIndex].id}
+                        galleryId={gallery.id}
+                        isInitiallyFavorited={initialFavorites.some(
+                          (f) => f.photo_id === photos[selectedImageIndex].id,
+                        )}
+                        variant="glass"
+                      />
                     )}
-                    variant="glass"
-                  />
-                )}
-              </div>
-            </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-            {/* LIGHTBOX IMAGE */}
-            <motion.div
-              key={selectedImageIndex}
-              drag="x"
-              dragConstraints={{ left: 0, right: 0 }}
-              onDragEnd={(_, info) => {
-                if (info.offset.x < -50) handleNext();
-                if (info.offset.x > 50) handlePrev();
+            {/* MAIN FULL-SCREEN IMAGE CONTAINER */}
+            <div
+              className="w-full h-full flex items-center justify-center relative touch-none"
+              onClick={() => setHideControls((prev) => !prev)}
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                setZoomScale((prev) => (prev === 1 ? 2.5 : 1));
               }}
-              className="w-full h-full flex items-center justify-center p-4"
             >
-              <img
-                src={photos[selectedImageIndex].url}
-                className="max-w-full max-h-[85vh] object-contain shadow-2xl select-none pointer-events-none"
-                alt="Preview"
-              />
-            </motion.div>
-
-            {/* ARROWS */}
-            <div className="hidden md:block">
-              {selectedImageIndex > 0 && (
-                <button
-                  onClick={handlePrev}
-                  className="absolute left-8 top-1/2 -translate-y-1/2 text-white/20 hover:text-white transition-all z-[100]"
-                >
-                  <ChevronLeft size={48} strokeWidth={1} />
-                </button>
-              )}
-              {selectedImageIndex < photos.length - 1 && (
-                <button
-                  onClick={handleNext}
-                  className="absolute right-8 top-1/2 -translate-y-1/2 text-white/20 hover:text-white transition-all z-[100]"
-                >
-                  <ChevronRight size={48} strokeWidth={1} />
-                </button>
-              )}
+              <AnimatePresence initial={false} mode="wait">
+                <motion.img
+                  key={selectedImageIndex}
+                  src={photos[selectedImageIndex].url}
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: zoomScale }}
+                  exit={{ opacity: 0, scale: 0.98 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  drag={zoomScale === 1 ? "x" : true}
+                  dragConstraints={
+                    zoomScale === 1
+                      ? { left: 0, right: 0 }
+                      : { left: -300, right: 300, top: -300, bottom: 300 }
+                  }
+                  onDragEnd={(_, info) => {
+                    if (zoomScale === 1) {
+                      if (info.offset.x < -60) handleNext();
+                      if (info.offset.x > 60) handlePrev();
+                    }
+                  }}
+                  className="max-w-full max-h-full w-full h-full object-contain cursor-grab active:cursor-grabbing pointer-events-auto transition-transform duration-200"
+                  alt="Preview"
+                />
+              </AnimatePresence>
             </div>
+
+            {/* NAVIGATION ARROWS */}
+            <AnimatePresence>
+              {!hideControls && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="hidden md:block"
+                >
+                  {selectedImageIndex > 0 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePrev();
+                      }}
+                      className="absolute left-6 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-all z-[100000] p-4"
+                    >
+                      <ChevronLeft size={48} strokeWidth={1} />
+                    </button>
+                  )}
+                  {selectedImageIndex < photos.length - 1 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleNext();
+                      }}
+                      className="absolute right-6 top-1/2 -translate-y-1/2 text-white/40 hover:text-white transition-all z-[100000] p-4"
+                    >
+                      <ChevronRight size={48} strokeWidth={1} />
+                    </button>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* DOWNLOAD BUTTON */}
-            {gallery.allow_download !== false && (
-              <div className="absolute bottom-10 z-[100]">
-                <button
-                  onClick={() => handleDownload(photos[selectedImageIndex].url)}
-                  className="bg-white text-black px-10 py-4 rounded-full font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition"
+            <AnimatePresence>
+              {!hideControls && gallery.allow_download !== false && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 20 }}
+                  className="absolute bottom-8 z-[100000]"
                 >
-                  Download High-Res
-                </button>
-              </div>
-            )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDownload(photos[selectedImageIndex].url);
+                    }}
+                    className="bg-white/90 backdrop-blur-md text-black px-8 py-3.5 rounded-full font-black text-[10px] uppercase tracking-widest shadow-2xl active:scale-95 transition"
+                  >
+                    Download High-Res
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>
