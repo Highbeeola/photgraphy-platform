@@ -5,7 +5,6 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { signOut } from "@/app/auth/actions";
 import HeroCarousel from "@/components/HeroCarousel";
-import SmartImage from "@/components/SmartImage";
 import { Mail, ArrowRight, Star } from "lucide-react";
 import { FaInstagram, FaTiktok, FaSnapchat, FaWhatsapp } from "react-icons/fa6";
 import { SiGmail } from "react-icons/si";
@@ -59,15 +58,11 @@ export default async function HomePage() {
     <div className="min-h-screen bg-white text-[#1a1a1a] selection:bg-slate-100">
       {/* 1. NAV (Logo Only - Scaled Up) */}
       <nav className="py-10 md:py-16 flex justify-center bg-white">
-        <div className="h-14 md:h-24 w-auto relative">
-          <SmartImage
-            src={`https://res.cloudinary.com/${cloudName}/image/upload/c_limit,h_200,q_auto,f_auto/logo_hz8esk`}
-            alt="Dara Pixel"
-            width={400}
-            height={200}
-            priority={true}
-          />
-        </div>
+        <img
+          src={`https://res.cloudinary.com/${cloudName}/image/upload/c_limit,h_200,q_auto,f_auto/logo_hz8esk`}
+          alt="Dara Pixel"
+          className="h-14 md:h-24 w-auto object-contain transition-transform duration-700 hover:scale-105"
+        />
       </nav>
 
       {/* --- 2. DYNAMIC HERO CAROUSEL --- */}
@@ -79,11 +74,10 @@ export default async function HomePage() {
       <section className="max-w-6xl mx-auto px-6 py-32 md:py-48 grid grid-cols-1 md:grid-cols-12 gap-16 md:gap-24 items-center">
         <div className="md:col-span-5 order-2 md:order-1">
           <div className="aspect-[3/4] bg-slate-100 grayscale-[10%] overflow-hidden shadow-2xl rounded-sm">
-            <SmartImage
+            <img
               src={`https://res.cloudinary.com/${cloudName}/image/upload/c_fill,g_face,w_800,h_1000,q_auto,f_auto/dara-portrait_ehh5hf`}
               alt="Dara Portrait"
-              width={800}
-              height={1000}
+              className="w-full h-full object-cover animate-reveal"
             />
           </div>
         </div>
@@ -137,13 +131,12 @@ export default async function HomePage() {
               return (
                 <div
                   key={photo.id}
-                  className="aspect-[4/5] bg-white overflow-hidden shadow-sm group rounded-xl"
+                  className="aspect-[4/5] bg-white overflow-hidden shadow-sm group"
                 >
-                  <SmartImage
+                  <img
                     src={url}
-                    alt="Featured photo"
-                    width={800}
-                    height={1000}
+                    className="w-full h-full object-cover grayscale-[10%] group-hover:grayscale-0 transition duration-700 group-hover:scale-105"
+                    alt="Featured"
                   />
                 </div>
               );
