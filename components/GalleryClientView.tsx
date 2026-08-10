@@ -65,9 +65,14 @@ export default function GalleryClientView({
   const touchStartX = useRef<number>(0);
   const ignoreSwipe = useRef<boolean>(false);
 
-  // Reset zoom scale when index changes
+  // Pinch zoom state
+  const initialPinchDistance = useRef<number | null>(null);
+  const initialZoomScale = useRef<number>(1);
+
+  // Reset zoom when changing image
   useEffect(() => {
     setZoomScale(1);
+    initialPinchDistance.current = null;
   }, [selectedImageIndex]);
 
   // Lock body scroll when Lightbox is active
@@ -80,6 +85,7 @@ export default function GalleryClientView({
       document.body.style.height = "auto";
       setHideControls(false);
     }
+
     return () => {
       document.body.style.overflow = "unset";
     };
@@ -89,12 +95,14 @@ export default function GalleryClientView({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (selectedImageIndex === null) return;
+
       if (e.key === "ArrowRight") handleNext();
       if (e.key === "ArrowLeft") handlePrev();
       if (e.key === "Escape") setSelectedImageIndex(null);
     };
 
     window.addEventListener("keydown", handleKeyDown);
+
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedImageIndex]);
 
@@ -110,35 +118,79 @@ export default function GalleryClientView({
     }
   };
 
+  // Double-tap zoom
   const handleToggleZoom = () => {
     setZoomScale((prev) => (prev === 1 ? 2.2 : 1));
   };
 
+  // Calculate distance between two fingers using React.TouchList type
+  const getTouchDistance = (touches: React.TouchList) => {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  // TOUCH START
   const handleTouchStart = (e: React.TouchEvent) => {
-    // If more than 1 finger is on the screen, lock out swipe navigation
-    if (e.touches.length > 1) {
+    // Two fingers = pinch gesture
+    if (e.touches.length === 2) {
       ignoreSwipe.current = true;
+
+      initialPinchDistance.current = getTouchDistance(e.touches);
+      initialZoomScale.current = zoomScale;
+
       return;
     }
 
-    // If we are already zoomed in, don't allow swiping
+    // If already zoomed, one-finger movement should not
+    // trigger previous/next photo navigation.
     if (zoomScale > 1) {
       ignoreSwipe.current = true;
       return;
     }
 
     ignoreSwipe.current = false;
+
     touchStartX.current = e.touches[0].clientX;
   };
 
+  // TOUCH MOVE
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (e.touches.length > 1 || zoomScale > 1) {
+    // PINCH ZOOM
+    if (e.touches.length === 2) {
+      ignoreSwipe.current = true;
+
+      if (initialPinchDistance.current !== null) {
+        const currentDistance = getTouchDistance(e.touches);
+
+        const scaleChange = currentDistance / initialPinchDistance.current;
+
+        const newScale = Math.min(
+          Math.max(initialZoomScale.current * scaleChange, 1),
+          4,
+        );
+
+        setZoomScale(newScale);
+      }
+
+      return;
+    }
+
+    // If zoomed in, don't allow swipe navigation
+    if (zoomScale > 1) {
       ignoreSwipe.current = true;
     }
   };
 
+  // TOUCH END
   const handleTouchEnd = (e: React.TouchEvent) => {
-    // If the gesture was flagged as multi-touch or zoomed, do nothing
+    // Reset pinch state when fewer than two fingers remain
+    if (e.touches.length < 2) {
+      initialPinchDistance.current = null;
+    }
+
+    // Don't turn pinch/zoom gestures into photo navigation
     if (ignoreSwipe.current) {
       return;
     }
@@ -146,7 +198,7 @@ export default function GalleryClientView({
     const touchEndX = e.changedTouches[0].clientX;
     const distance = touchStartX.current - touchEndX;
 
-    // Higher threshold (80px) feels more "intentional" on mobile
+    // Swipe threshold
     if (distance > 80) {
       handleNext();
     } else if (distance < -80) {
@@ -158,13 +210,23 @@ export default function GalleryClientView({
     try {
       const res = await fetch(originalUrl);
       const blob = await res.blob();
+
       const blobUrl = window.URL.createObjectURL(blob);
+
       const a = document.createElement("a");
+
       a.href = blobUrl;
-      a.download = `${gallery.title.replace(/\s+/g, "-")}-${(selectedImageIndex ?? 0) + 1}.jpg`;
+
+      a.download = `${gallery.title.replace(/\s+/g, "-")}-${
+        (selectedImageIndex ?? 0) + 1
+      }.jpg`;
+
       document.body.appendChild(a);
+
       a.click();
+
       a.remove();
+
       window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
       console.error("Failed to download image:", error);
@@ -195,10 +257,13 @@ export default function GalleryClientView({
 
   const handleModalLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!guestEmail.trim()) return;
 
     localStorage.setItem("guest_email", guestEmail);
+
     setShowGuestModal(false);
+
     await executeBulkFavorite(guestEmail);
   };
 
@@ -215,7 +280,9 @@ export default function GalleryClientView({
 
   const getFileName = (path: string) => {
     if (!path) return "";
+
     const name = path.split("/").pop() || "";
+
     return name.length > 20 ? `${name.substring(0, 17)}...` : name;
   };
 
@@ -228,6 +295,7 @@ export default function GalleryClientView({
         <h1 className="text-5xl md:text-8xl font-serif italic tracking-tighter">
           {gallery.title}
         </h1>
+
         <p className="text-[10px] uppercase tracking-[0.6em] text-slate-400">
           Collection
         </p>
@@ -235,6 +303,7 @@ export default function GalleryClientView({
         <div className="flex justify-center items-center gap-8 pt-4">
           <div className="flex flex-col items-center gap-2 group cursor-pointer">
             <CopyLinkButton galleryId={gallery.id} />
+
             <span className="text-[9px] uppercase tracking-widest text-slate-300 group-hover:text-slate-900 transition">
               Share
             </span>
@@ -251,6 +320,7 @@ export default function GalleryClientView({
                   className="text-slate-800 group-hover:text-red-500 transition-colors"
                 />
               </div>
+
               <span className="text-[9px] uppercase tracking-widest text-slate-300 group-hover:text-slate-900 transition-colors">
                 Favorite All
               </span>
@@ -259,6 +329,7 @@ export default function GalleryClientView({
         </div>
       </div>
 
+      {/* GALLERY */}
       <main className="max-w-[1600px] mx-auto px-2 md:px-4 pb-20">
         <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
           {photos.map((photo, index) => (
@@ -294,7 +365,9 @@ export default function GalleryClientView({
                 <div className="w-10 h-10 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-4">
                   <Heart size={20} />
                 </div>
+
                 <h3 className="text-xl font-serif italic">Save Favorites</h3>
+
                 <p className="text-xs text-slate-500 leading-relaxed">
                   Enter your email address to save your favorite selections in
                   this gallery.
@@ -307,6 +380,7 @@ export default function GalleryClientView({
                     size={16}
                     className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
                   />
+
                   <input
                     type="email"
                     required
@@ -329,7 +403,7 @@ export default function GalleryClientView({
         )}
       </AnimatePresence>
 
-      {/* LIGHTBOX MODAL */}
+      {/* LIGHTBOX */}
       <AnimatePresence>
         {selectedImageIndex !== null && (
           <motion.div
@@ -387,6 +461,7 @@ export default function GalleryClientView({
                           >
                             •
                           </span>
+
                           <span
                             className={`text-[10px] font-mono tracking-tight hidden sm:inline-block ${
                               isDark ? "text-white/40" : "text-slate-400"
@@ -406,6 +481,7 @@ export default function GalleryClientView({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+
                           handleDownload(photos[selectedImageIndex].url);
                         }}
                         className={`px-3.5 py-2 md:px-4 md:py-2 rounded-full font-bold text-[10px] uppercase tracking-widest flex items-center gap-1.5 transition-all shadow-md active:scale-95 ${
@@ -416,6 +492,7 @@ export default function GalleryClientView({
                         title="Download High-Res Photo"
                       >
                         <Download size={13} strokeWidth={2.5} />
+
                         <span className="hidden sm:inline">Download</span>
                       </button>
                     )}
@@ -423,6 +500,7 @@ export default function GalleryClientView({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+
                         setLightboxTheme((prev) =>
                           prev === "dark" ? "light" : "dark",
                         );
@@ -476,8 +554,9 @@ export default function GalleryClientView({
                   transform: `scale(${zoomScale})`,
                   transformOrigin: "center center",
                 }}
-                className="w-full h-auto max-h-[88dvh] md:max-h-[85vh] object-contain transition-transform duration-200 ease-out select-none touch-pan-x touch-pan-y block mx-auto"
+                className="w-full h-auto max-h-[88dvh] md:max-h-[85vh] object-contain transition-transform duration-200 ease-out select-none block mx-auto"
                 alt="Preview"
+                draggable={false}
               />
             </div>
 
@@ -505,6 +584,7 @@ export default function GalleryClientView({
                       <ChevronLeft size={28} className="md:w-10 md:h-10" />
                     </button>
                   )}
+
                   {selectedImageIndex < photos.length - 1 && (
                     <button
                       onClick={(e) => {
