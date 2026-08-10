@@ -59,23 +59,62 @@ export default function GalleryClientView({
   // Lightbox UI state
   const [hideControls, setHideControls] = useState(false);
   const [zoomScale, setZoomScale] = useState(1);
+  const [translateX, setTranslateX] = useState(0);
+  const [translateY, setTranslateY] = useState(0);
   const [lightboxTheme, setLightboxTheme] = useState<"dark" | "light">("dark");
 
-  // Touch swipe state
-  const touchStartX = useRef<number>(0);
-  const ignoreSwipe = useRef<boolean>(false);
+  // Swipe state
+  const touchStartX = useRef(0);
+  const ignoreSwipe = useRef(false);
 
-  // Pinch zoom state
+  // Pinch state
   const initialPinchDistance = useRef<number | null>(null);
-  const initialZoomScale = useRef<number>(1);
+  const initialZoomScale = useRef(1);
 
-  // Reset zoom when changing image
+  // Image dragging state
+  const lastTouchX = useRef(0);
+  const lastTouchY = useRef(0);
+  const isDraggingImage = useRef(false);
+
+  // Prevent touch gestures from triggering click afterwards
+  const wasTouchGesture = useRef(false);
+
+  // Track whether the image is actively being dragged
+  const [isDragging, setIsDragging] = useState(false);
+
+  // ---------------------------------------------------------
+  // RESET IMAGE POSITION / ZOOM WHEN PHOTO CHANGES
+  // ---------------------------------------------------------
   useEffect(() => {
     setZoomScale(1);
+    setTranslateX(0);
+    setTranslateY(0);
     initialPinchDistance.current = null;
+    initialZoomScale.current = 1;
+
+    isDraggingImage.current = false;
+    setIsDragging(false);
   }, [selectedImageIndex]);
 
-  // Lock body scroll when Lightbox is active
+  // ---------------------------------------------------------
+  // PRELOAD ADJACENT IMAGES
+  // ---------------------------------------------------------
+  useEffect(() => {
+    if (selectedImageIndex === null) return;
+    const preload = (index: number) => {
+      if (index < 0 || index >= photos.length) return;
+
+      const img = new Image();
+      img.src = photos[index].url;
+    };
+
+    preload(selectedImageIndex - 1);
+    preload(selectedImageIndex + 1);
+  }, [selectedImageIndex, photos]);
+
+  // ---------------------------------------------------------
+  // LOCK BODY SCROLL WHEN LIGHTBOX IS ACTIVE
+  // ---------------------------------------------------------
   useEffect(() => {
     if (selectedImageIndex !== null) {
       document.body.style.overflow = "hidden";
@@ -85,17 +124,17 @@ export default function GalleryClientView({
       document.body.style.height = "auto";
       setHideControls(false);
     }
-
     return () => {
       document.body.style.overflow = "unset";
     };
   }, [selectedImageIndex]);
 
-  // Keyboard navigation
+  // ---------------------------------------------------------
+  // KEYBOARD NAVIGATION
+  // ---------------------------------------------------------
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (selectedImageIndex === null) return;
-
       if (e.key === "ArrowRight") handleNext();
       if (e.key === "ArrowLeft") handlePrev();
       if (e.key === "Escape") setSelectedImageIndex(null);
@@ -103,7 +142,9 @@ export default function GalleryClientView({
 
     window.addEventListener("keydown", handleKeyDown);
 
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
   }, [selectedImageIndex]);
 
   const handleNext = () => {
@@ -118,24 +159,51 @@ export default function GalleryClientView({
     }
   };
 
-  // Double-tap zoom
+  // ---------------------------------------------------------
+  // DOUBLE-TAP ZOOM
+  // ---------------------------------------------------------
   const handleToggleZoom = () => {
-    setZoomScale((prev) => (prev === 1 ? 2.2 : 1));
+    if (zoomScale === 1) {
+      setZoomScale(2.2);
+    } else {
+      setZoomScale(1);
+      setTranslateX(0);
+      setTranslateY(0);
+    }
   };
 
-  // Calculate distance between two fingers using React.TouchList type
+  // ---------------------------------------------------------
+  // PINCH DISTANCE
+  // ---------------------------------------------------------
   const getTouchDistance = (touches: React.TouchList) => {
+    if (touches.length < 2) return 0;
     const dx = touches[0].clientX - touches[1].clientX;
     const dy = touches[0].clientY - touches[1].clientY;
 
     return Math.sqrt(dx * dx + dy * dy);
   };
 
+  // ---------------------------------------------------------
+  // VIEWPORT CLICK
+  // ---------------------------------------------------------
+  const handleViewportClick = () => {
+    if (wasTouchGesture.current) {
+      wasTouchGesture.current = false;
+      return;
+    }
+    setHideControls((prev) => !prev);
+  };
+
+  // ---------------------------------------------------------
   // TOUCH START
+  // ---------------------------------------------------------
   const handleTouchStart = (e: React.TouchEvent) => {
-    // Two fingers = pinch gesture
+    // TWO FINGERS = PINCH
     if (e.touches.length === 2) {
+      wasTouchGesture.current = true;
       ignoreSwipe.current = true;
+      isDraggingImage.current = false;
+      setIsDragging(false);
 
       initialPinchDistance.current = getTouchDistance(e.touches);
       initialZoomScale.current = zoomScale;
@@ -143,23 +211,40 @@ export default function GalleryClientView({
       return;
     }
 
-    // If already zoomed, one-finger movement should not
-    // trigger previous/next photo navigation.
+    // ONE FINGER
+    const touch = e.touches[0];
+
+    lastTouchX.current = touch.clientX;
+    lastTouchY.current = touch.clientY;
+
     if (zoomScale > 1) {
+      wasTouchGesture.current = true;
+
       ignoreSwipe.current = true;
+      isDraggingImage.current = true;
+      setIsDragging(true);
+
       return;
     }
 
     ignoreSwipe.current = false;
+    isDraggingImage.current = false;
+    setIsDragging(false);
 
-    touchStartX.current = e.touches[0].clientX;
+    touchStartX.current = touch.clientX;
   };
 
+  // ---------------------------------------------------------
   // TOUCH MOVE
+  // ---------------------------------------------------------
   const handleTouchMove = (e: React.TouchEvent) => {
     // PINCH ZOOM
     if (e.touches.length === 2) {
+      wasTouchGesture.current = true;
+
       ignoreSwipe.current = true;
+      isDraggingImage.current = false;
+      setIsDragging(false);
 
       if (initialPinchDistance.current !== null) {
         const currentDistance = getTouchDistance(e.touches);
@@ -177,28 +262,50 @@ export default function GalleryClientView({
       return;
     }
 
-    // If zoomed in, don't allow swipe navigation
-    if (zoomScale > 1) {
-      ignoreSwipe.current = true;
+    // DRAG ZOOMED IMAGE
+    if (zoomScale > 1 && isDraggingImage.current) {
+      wasTouchGesture.current = true;
+
+      const touch = e.touches[0];
+
+      const deltaX = touch.clientX - lastTouchX.current;
+      const deltaY = touch.clientY - lastTouchY.current;
+
+      setTranslateX((prev) => prev + deltaX);
+      setTranslateY((prev) => prev + deltaY);
+
+      lastTouchX.current = touch.clientX;
+      lastTouchY.current = touch.clientY;
+
+      return;
     }
   };
 
+  // ---------------------------------------------------------
   // TOUCH END
+  // ---------------------------------------------------------
   const handleTouchEnd = (e: React.TouchEvent) => {
-    // Reset pinch state when fewer than two fingers remain
     if (e.touches.length < 2) {
       initialPinchDistance.current = null;
     }
 
-    // Don't turn pinch/zoom gestures into photo navigation
+    if (isDraggingImage.current) {
+      isDraggingImage.current = false;
+      setIsDragging(false);
+
+      return;
+    }
+
     if (ignoreSwipe.current) {
       return;
     }
 
-    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndX = e.changedTouches[0]?.clientX;
+
+    if (touchEndX === undefined) return;
+
     const distance = touchStartX.current - touchEndX;
 
-    // Swipe threshold
     if (distance > 80) {
       handleNext();
     } else if (distance < -80) {
@@ -206,11 +313,24 @@ export default function GalleryClientView({
     }
   };
 
+  // ---------------------------------------------------------
+  // TOUCH CANCEL
+  // ---------------------------------------------------------
+  const handleTouchCancel = () => {
+    initialPinchDistance.current = null;
+    isDraggingImage.current = false;
+    setIsDragging(false);
+
+    ignoreSwipe.current = true;
+  };
+
+  // ---------------------------------------------------------
+  // DOWNLOAD
+  // ---------------------------------------------------------
   const handleDownload = async (originalUrl: string) => {
     try {
       const res = await fetch(originalUrl);
       const blob = await res.blob();
-
       const blobUrl = window.URL.createObjectURL(blob);
 
       const a = document.createElement("a");
@@ -233,10 +353,12 @@ export default function GalleryClientView({
     }
   };
 
+  // ---------------------------------------------------------
+  // FAVORITES
+  // ---------------------------------------------------------
   const executeBulkFavorite = async (email: string) => {
     const photoIds = photos.map((p) => p.id);
     const slug = gallery.slug || gallery.id;
-
     toast.promise(
       async () => {
         const result = await bulkFavorite(photoIds, email, gallery.id, slug);
@@ -257,7 +379,6 @@ export default function GalleryClientView({
 
   const handleModalLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!guestEmail.trim()) return;
 
     localStorage.setItem("guest_email", guestEmail);
@@ -269,7 +390,6 @@ export default function GalleryClientView({
 
   const handleFavoriteAll = async () => {
     const savedEmail = localStorage.getItem("guest_email");
-
     if (!savedEmail) {
       setShowGuestModal(true);
       return;
@@ -278,9 +398,11 @@ export default function GalleryClientView({
     await executeBulkFavorite(savedEmail);
   };
 
+  // ---------------------------------------------------------
+  // FILE NAME
+  // ---------------------------------------------------------
   const getFileName = (path: string) => {
     if (!path) return "";
-
     const name = path.split("/").pop() || "";
 
     return name.length > 20 ? `${name.substring(0, 17)}...` : name;
@@ -288,9 +410,13 @@ export default function GalleryClientView({
 
   const isDark = lightboxTheme === "dark";
 
+  // FIXED: Added backticks around template string
+  const imageTransform = `translate3d(${translateX}px, ${translateY}px, 0) scale(${zoomScale})`;
+
   return (
-    <div className="min-h-screen bg-white">
-      {/* HEADER SECTION */}
+    // FIXED: Wrapped in React Fragment <>
+    <>
+      {/* HEADER */}
       <div className="text-center py-20 space-y-6">
         <h1 className="text-5xl md:text-8xl font-serif italic tracking-tighter">
           {gallery.title}
@@ -433,6 +559,8 @@ export default function GalleryClientView({
                       onClick={() => {
                         setSelectedImageIndex(null);
                         setZoomScale(1);
+                        setTranslateX(0);
+                        setTranslateY(0);
                       }}
                       className={`p-2 transition ${
                         isDark
@@ -535,32 +663,38 @@ export default function GalleryClientView({
               )}
             </AnimatePresence>
 
-            {/* MAIN IMAGE VIEWPORT */}
+            {/* IMAGE VIEWPORT */}
             <div
-              className="w-full h-full flex items-center justify-center relative overflow-auto touch-none"
-              onClick={() => setHideControls((prev) => !prev)}
+              className="w-full h-full flex items-center justify-center relative overflow-hidden touch-none"
+              onClick={handleViewportClick}
               onTouchStart={handleTouchStart}
               onTouchMove={handleTouchMove}
               onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchCancel}
             >
               <img
-                key={selectedImageIndex}
                 src={photos[selectedImageIndex].url}
                 onDoubleClick={(e) => {
                   e.stopPropagation();
+
                   handleToggleZoom();
                 }}
                 style={{
-                  transform: `scale(${zoomScale})`,
+                  transform: imageTransform,
+
+                  transition: isDragging ? "none" : "transform 180ms ease-out",
+
                   transformOrigin: "center center",
+
+                  willChange: "transform",
                 }}
-                className="w-full h-auto max-h-[88dvh] md:max-h-[85vh] object-contain transition-transform duration-200 ease-out select-none block mx-auto"
+                className="w-full h-auto max-h-[88dvh] md:max-h-[85vh] object-contain select-none block mx-auto"
                 alt="Preview"
                 draggable={false}
               />
             </div>
 
-            {/* OVERLAY NAVIGATION ARROWS */}
+            {/* NAVIGATION ARROWS */}
             <AnimatePresence>
               {!hideControls && (
                 <motion.div
@@ -572,6 +706,7 @@ export default function GalleryClientView({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+
                         handlePrev();
                       }}
                       className={`absolute left-2 md:left-6 top-1/2 -translate-y-1/2 transition-all z-[100000] p-2 md:p-4 rounded-full backdrop-blur-sm ${
@@ -589,6 +724,7 @@ export default function GalleryClientView({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+
                         handleNext();
                       }}
                       className={`absolute right-2 md:right-6 top-1/2 -translate-y-1/2 transition-all z-[100000] p-2 md:p-4 rounded-full backdrop-blur-sm ${
@@ -607,6 +743,6 @@ export default function GalleryClientView({
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
 }
