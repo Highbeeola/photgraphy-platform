@@ -226,22 +226,40 @@ export default async function PixiesetGalleryManager({
 
       {/* 2. MAIN CONTENT AREA */}
       <main className="flex-1 bg-white">
-        <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-          <h1 className="text-xl font-serif italic lg:block hidden">
-            Highlights
-          </h1>
-          <div className="flex gap-3 w-full lg:w-auto justify-between lg:justify-end">
-            <div className="flex gap-2">
-              <CopyLinkButton galleryId={gallery.slug} />
-              <PublishButton galleryId={id} isPublic={gallery.is_public} />
-            </div>
+        {/* MOBILE HEADER - Sticky at the top of the main area */}
+        <header className="lg:hidden sticky top-0 z-30 bg-white/95 backdrop-blur-md px-4 py-4 border-b border-slate-100 flex items-center justify-between shadow-sm">
+          <div className="flex items-center gap-2">
+            {/* --- THE BACK BUTTON --- */}
+            <Link
+              href="/admin"
+              className="p-2 -ml-2 text-slate-400 hover:text-black hover:bg-slate-50 rounded-full transition-all active:scale-90"
+            >
+              <ChevronLeft size={24} strokeWidth={2.5} />
+            </Link>
+
+            <span className="text-[10px] font-black uppercase tracking-widest text-slate-900 truncate max-w-[120px]">
+              {gallery.title}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1">
+            <CopyLinkButton galleryId={gallery.slug} />
             <Link
               href={`/gallery/${gallery.slug}`}
               target="_blank"
-              className="lg:hidden p-2 bg-slate-100 rounded-lg"
+              className="p-2 text-slate-400 hover:text-black rounded-lg transition"
             >
-              <Eye size={18} />
+              <Eye size={20} />
             </Link>
+          </div>
+        </header>
+
+        {/* DESKTOP HEADER */}
+        <header className="hidden lg:flex sticky top-0 z-20 bg-white/80 backdrop-blur-md px-6 py-4 border-b border-slate-100 justify-between items-center">
+          <h1 className="text-xl font-serif italic">Highlights</h1>
+          <div className="flex gap-3 items-center">
+            <CopyLinkButton galleryId={gallery.slug} />
+            <PublishButton galleryId={id} isPublic={gallery.is_public} />
           </div>
         </header>
 

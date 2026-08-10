@@ -60,6 +60,7 @@ export default function AdminPhotoControls({
           )
         }
         disabled={isPending}
+        aria-label="Display in Home Carousel"
         title="Display in Home Carousel"
         className={`flex-1 flex justify-center items-center h-full transition-colors ${
           isHero
@@ -81,6 +82,7 @@ export default function AdminPhotoControls({
           )
         }
         disabled={isPending}
+        aria-label="Feature on Homepage"
         title="Feature on Homepage"
         className={`flex-1 flex justify-center items-center h-full border-x border-white/10 transition-colors ${
           isFeatured
@@ -102,6 +104,7 @@ export default function AdminPhotoControls({
           )
         }
         disabled={isPending}
+        aria-label="Set as Main Cover"
         title="Set as Main Cover"
         className={`flex-1 flex justify-center items-center h-full border-r border-white/10 transition-colors ${
           isCurrentCover
@@ -125,6 +128,7 @@ export default function AdminPhotoControls({
           }
         }}
         disabled={isPending}
+        aria-label="Delete Photo"
         title="Delete Photo"
         className="flex-1 flex justify-center items-center h-full transition-colors text-white/30 hover:text-red-500 hover:bg-red-500/10 active:scale-90"
       >

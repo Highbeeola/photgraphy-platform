@@ -56,6 +56,7 @@ export default function HeroCarousel({ photos }: HeroCarouselProps) {
               src={photo.url}
               fill
               priority={index === 0}
+               {...(index === 0 ? { fetchPriority: "high" } : {})}
               sizes="100vw"
               className="object-cover object-[50%_15%]"
               alt="Photography Hero"

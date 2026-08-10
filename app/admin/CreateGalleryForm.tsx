@@ -33,10 +33,14 @@ export default function CreateGalleryForm() {
       >
         {/* Title: 4 columns */}
         <div className="md:col-span-4 space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-[.2em] text-slate-400 ml-1">
+          <label
+            htmlFor="gallery-title"
+            className="text-[10px] font-black uppercase tracking-[.2em] text-slate-400 ml-1"
+          >
             Gallery Title
           </label>
           <input
+            id="gallery-title"
             name="title"
             placeholder="e.g. The Smith Wedding"
             className="w-full h-12 px-4 border border-slate-200 rounded-2xl bg-white outline-none focus:ring-1 focus:ring-black transition-all"
@@ -46,10 +50,14 @@ export default function CreateGalleryForm() {
 
         {/* Date: 3 columns */}
         <div className="md:col-span-3 space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-[.2em] text-slate-400 ml-1">
+          <label
+            htmlFor="gallery-event-date"
+            className="text-[10px] font-black uppercase tracking-[.2em] text-slate-400 ml-1"
+          >
             Event Date
           </label>
           <input
+            id="gallery-event-date"
             name="eventDate"
             type="date"
             className="w-full h-12 px-4 border border-slate-200 rounded-2xl bg-white outline-none focus:ring-1 focus:ring-black transition-all appearance-none flex items-center text-sm"
@@ -58,10 +66,14 @@ export default function CreateGalleryForm() {
 
         {/* PIN: 2 columns */}
         <div className="md:col-span-2 space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-[.2em] text-slate-400 ml-1">
+          <label
+            htmlFor="gallery-pin"
+            className="text-[10px] font-black uppercase tracking-[.2em] text-slate-400 ml-1"
+          >
             Access PIN
           </label>
           <input
+            id="gallery-pin"
             name="password"
             placeholder="0000"
             className="w-full h-12 px-4 border border-slate-200 rounded-2xl bg-white outline-none focus:ring-1 focus:ring-black transition-all text-center font-mono"
@@ -70,10 +82,14 @@ export default function CreateGalleryForm() {
 
         {/* Category: 3 columns */}
         <div className="md:col-span-3 space-y-2">
-          <label className="text-[10px] font-black uppercase tracking-[.2em] text-slate-400 ml-1">
+          <label
+            htmlFor="gallery-category"
+            className="text-[10px] font-black uppercase tracking-[.2em] text-slate-400 ml-1"
+          >
             Category
           </label>
           <input
+            id="gallery-category"
             name="category"
             list="category-suggestions"
             defaultValue="Lifestyle"
