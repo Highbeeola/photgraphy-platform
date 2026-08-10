@@ -9,7 +9,7 @@ import PublishButton from "@/components/PublishButton";
 import AdminPhotoControls from "@/components/AdminPhotoControls";
 import SmartImage from "@/components/SmartImage";
 import EditableGalleryTitle from "@/components/EditableGalleryTitle";
-import { updateGallerySettings } from "@/app/admin/actions";
+import SettingsToggle from "@/components/SettingsToggle";
 import {
   Eye,
   Image as ImageIcon,
@@ -177,70 +177,26 @@ export default async function PixiesetGalleryManager({
             )}
           </div>
 
-          {/* Collection Permissions Toggles */}
+          {/* INTEGRATED SETTINGSTOGGLE (Desktop Sidebar) */}
           <div className="p-6 space-y-6 border-b border-slate-50 bg-slate-50/30">
             <p className="text-[10px] uppercase tracking-widest text-slate-400 font-black">
-              Collection Permissions
+              Permissions
             </p>
 
             <div className="space-y-4">
-              {/* Toggle: Downloads */}
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-slate-600">
-                  Download
-                </span>
-                <form
-                  action={async () => {
-                    "use server";
-                    await updateGallerySettings(id, {
-                      allow_download: !gallery.allow_download,
-                    });
-                  }}
-                >
-                  <button
-                    type="submit"
-                    className={`w-10 h-5 rounded-full transition-all relative ${
-                      gallery.allow_download ? "bg-emerald-500" : "bg-slate-300"
-                    }`}
-                  >
-                    <div
-                      className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${
-                        gallery.allow_download ? "left-6" : "left-1"
-                      }`}
-                    />
-                  </button>
-                </form>
-              </div>
+              <SettingsToggle
+                galleryId={id}
+                label="Downloads"
+                field="allow_download"
+                initialValue={gallery.allow_download}
+              />
 
-              {/* Toggle: Favorites */}
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-slate-600">
-                  Favorite
-                </span>
-                <form
-                  action={async () => {
-                    "use server";
-                    await updateGallerySettings(id, {
-                      allow_favorites: !gallery.allow_favorites,
-                    });
-                  }}
-                >
-                  <button
-                    type="submit"
-                    className={`w-10 h-5 rounded-full transition-all relative ${
-                      gallery.allow_favorites
-                        ? "bg-emerald-500"
-                        : "bg-slate-300"
-                    }`}
-                  >
-                    <div
-                      className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${
-                        gallery.allow_favorites ? "left-6" : "left-1"
-                      }`}
-                    />
-                  </button>
-                </form>
-              </div>
+              <SettingsToggle
+                galleryId={id}
+                label="Favorites"
+                field="allow_favorites"
+                initialValue={gallery.allow_favorites}
+              />
             </div>
           </div>
 
@@ -297,7 +253,11 @@ export default async function PixiesetGalleryManager({
                 Settings
               </span>
               <div
-                className={`px-3 py-1 rounded-full text-[10px] font-bold ${gallery.is_public ? "bg-emerald-100 text-emerald-600" : "bg-orange-100 text-orange-600"}`}
+                className={`px-3 py-1 rounded-full text-[10px] font-bold ${
+                  gallery.is_public
+                    ? "bg-emerald-100 text-emerald-600"
+                    : "bg-orange-100 text-orange-600"
+                }`}
               >
                 {gallery.is_public ? "LIVE" : "DRAFT"}
               </div>
@@ -335,37 +295,30 @@ export default async function PixiesetGalleryManager({
               )}
             </div>
 
-            {/* TOGGLES */}
-            <div className="space-y-4">
-              <div className="flex justify-between items-center text-xs font-bold uppercase text-slate-600">
-                <span>Allow Downloads</span>
-                <form
-                  action={async () => {
-                    "use server";
-                    await updateGallerySettings(id, {
-                      allow_download: !gallery.allow_download,
-                    });
-                  }}
-                >
-                  <button
-                    type="submit"
-                    className={`w-10 h-5 rounded-full relative transition-all ${gallery.allow_download ? "bg-emerald-500" : "bg-slate-300"}`}
-                  >
-                    <div
-                      className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${gallery.allow_download ? "left-6" : "left-1"}`}
-                    />
-                  </button>
-                </form>
-              </div>
+            {/* INTEGRATED SETTINGSTOGGLE (Mobile View) */}
+            <div className="space-y-4 pt-2 border-b border-slate-200 pb-4">
+              <SettingsToggle
+                galleryId={id}
+                label="Downloads"
+                field="allow_download"
+                initialValue={gallery.allow_download}
+              />
 
-              <div className="flex justify-between items-center text-xs font-bold uppercase text-slate-600">
-                <span>
-                  Access PIN:{" "}
-                  <span className="font-mono text-black ml-2">
-                    {gallery.password || "NONE"}
-                  </span>
+              <SettingsToggle
+                galleryId={id}
+                label="Favorites"
+                field="allow_favorites"
+                initialValue={gallery.allow_favorites}
+              />
+            </div>
+
+            <div className="flex justify-between items-center text-xs font-bold uppercase text-slate-600">
+              <span>
+                Access PIN:{" "}
+                <span className="font-mono text-black ml-2">
+                  {gallery.password || "NONE"}
                 </span>
-              </div>
+              </span>
             </div>
           </div>
 
