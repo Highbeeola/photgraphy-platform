@@ -8,7 +8,7 @@ interface SmartImageProps {
   alt?: string;
   width?: number;
   height?: number;
-  priority?: boolean;
+  priority?: boolean; // Added priority support
 }
 
 export default function SmartImage({
@@ -55,9 +55,9 @@ export default function SmartImage({
           alt={alt || "Photography item"}
           width={width}
           height={height}
-          priority={priority}
+          priority={priority} // Crucial for Hero images!
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className={`w-full h-auto object-cover transition-all duration-500 group-hover:scale-[1.02] ${
+          className={`w-full h-auto object-cover transition-opacity duration-300 ${
             isLoaded ? "opacity-100" : "opacity-0"
           }`}
           onLoad={() => setIsLoaded(true)}
