@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { unstable_noStore as noStore } from "next/cache";
 import Link from "next/link";
+import SmartImage from "@/components/SmartImage"; // 1. Import SmartImage
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -45,7 +46,6 @@ export default async function PortfolioPage() {
 
           return (
             <section key={cat} id={cat.toLowerCase().replace(/\s+/g, "-")}>
-              {/* BOLDER CATEGORY HEADER */}
               <h2 className="text-xs md:text-sm uppercase tracking-[0.6em] text-slate-900 font-black mb-10 text-center">
                 {cat}s
               </h2>
@@ -65,19 +65,18 @@ export default async function PortfolioPage() {
                     : null;
 
                   return (
-                    /* ENTIRE CARD WRAPPED IN LINK (CLICKABLE IMAGE + TEXT) */
                     <Link
                       key={gallery.id}
                       href={`/gallery/${gallery.slug}`}
                       className="group block space-y-4 cursor-pointer"
                     >
-                      {/* FULL UNCROPPED IMAGE CONTAINER */}
+                      {/* 2. REPLACED <img> WITH <SmartImage> */}
                       <div className="w-full overflow-hidden rounded-xl bg-slate-100 shadow-sm transition-all duration-500 group-hover:shadow-xl">
                         {coverUrl && (
-                          <img
+                          <SmartImage
                             src={coverUrl}
                             alt={gallery.title}
-                            className="w-full h-auto object-contain transition duration-500 group-hover:scale-[1.02]"
+                            width={1000}
                           />
                         )}
                       </div>
