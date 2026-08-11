@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
+import "photoswipe/dist/photoswipe.css";
 
 // 1. Initialize fonts
 const serif = Cormorant_Garamond({
