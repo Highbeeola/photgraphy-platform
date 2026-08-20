@@ -46,8 +46,11 @@ body {
   mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>');
 }
 
-/* 3. FIX SWIPE DOWN (IOS Safari Fix) */
+/* 3. iOS Safari note: do NOT set touch-action: none on .pswp — PhotoSwipe
+   manages touch-action internally to detect vertical dismiss drags, and
+   an !important override on the container blocks that detection. If you
+   see pull-to-refresh or rubber-banding while the lightbox is open, fix
+   that on body/html scoped to when the lightbox is open, not here. */
 .pswp {
   --pswp-bg: #000;
-  touch-action: none !important; /* Forces the gesture to go to PhotoSwipe, not the browser */
 }

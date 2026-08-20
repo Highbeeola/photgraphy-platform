@@ -92,43 +92,58 @@ export default function GalleryClientView({
   };
 
   // PhotoSwipe Custom UI Elements
+  // NOTE: `name` here becomes the CSS class suffix, i.e. `.pswp__button--{name}`.
+  // Renamed to "download" / "favorite" to match globals.css. Also switched
+  // isAbove -> isButton (the property PhotoSwipe's registerElement expects).
   const uiElements = [
-    {
-      name: "download-button",
-      order: 10,
-      isAbove: true,
-      tagName: "button",
-      html: "↓",
-      onClick: (e: any, el: any, pswpInstance: any) => {
-        handleDownload(pswpInstance.currSlide.data.src);
-      },
-    },
-    {
-      name: "favorite-button",
-      order: 9,
-      isAbove: true,
-      tagName: "button",
-      html: "❤",
-      onClick: async (e: any, el: any, pswpInstance: any) => {
-        const currentPhoto = photos[pswpInstance.currIndex];
-        const savedEmail =
-          typeof window !== "undefined"
-            ? localStorage.getItem("guest_email")
-            : null;
+    ...(gallery.allow_download !== false
+      ? [
+          {
+            name: "download",
+            order: 10,
+            isButton: true,
+            tagName: "button",
+            html: "↓",
+            onClick: (e: any, el: any, pswpInstance: any) => {
+              handleDownload(pswpInstance.currSlide.data.src);
+            },
+          },
+        ]
+      : []),
+    ...(gallery.allow_favorites !== false
+      ? [
+          {
+            name: "favorite",
+            order: 9,
+            isButton: true,
+            tagName: "button",
+            html: "❤",
+            onClick: async (e: any, el: any, pswpInstance: any) => {
+              const currentPhoto = photos[pswpInstance.currIndex];
+              const savedEmail =
+                typeof window !== "undefined"
+                  ? localStorage.getItem("guest_email")
+                  : null;
 
-        if (!savedEmail) {
-          pswpInstance.close();
-          setShowGuestModal(true);
-        } else {
-          try {
-            await toggleGuestFavorite(currentPhoto.id, gallery.id, savedEmail);
-            toast.success("Updated favorites");
-          } catch (err) {
-            toast.error("Failed to update favorite");
-          }
-        }
-      },
-    },
+              if (!savedEmail) {
+                pswpInstance.close();
+                setShowGuestModal(true);
+              } else {
+                try {
+                  await toggleGuestFavorite(
+                    currentPhoto.id,
+                    gallery.id,
+                    savedEmail,
+                  );
+                  toast.success("Updated favorites");
+                } catch (err) {
+                  toast.error("Failed to update favorite");
+                }
+              }
+            },
+          },
+        ]
+      : []),
   ];
 
   // PhotoSwipe Lightbox Options
