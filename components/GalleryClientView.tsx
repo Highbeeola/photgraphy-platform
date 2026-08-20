@@ -30,16 +30,24 @@ interface GalleryData {
   allow_download?: boolean;
 }
 
+interface User {
+  id: string;
+  email?: string;
+  [key: string]: any;
+}
+
 interface GalleryClientViewProps {
   gallery: GalleryData;
   photos: Photo[];
   initialFavorites?: Favorite[];
+  user?: User | null;
 }
 
 export default function GalleryClientView({
   gallery,
   photos,
   initialFavorites = [],
+  user,
 }: GalleryClientViewProps) {
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [guestEmail, setGuestEmail] = useState("");
@@ -112,9 +120,11 @@ export default function GalleryClientView({
 
   const handleFavoriteAll = async () => {
     const savedEmail =
-      typeof window !== "undefined"
+      user?.email ||
+      (typeof window !== "undefined"
         ? localStorage.getItem("guest_email")
-        : null;
+        : null);
+
     if (!savedEmail) {
       setShowGuestModal(true);
       return;
@@ -123,7 +133,6 @@ export default function GalleryClientView({
   };
 
   // PhotoSwipe Custom UI Elements
-  // `name` becomes the CSS class suffix: .pswp__button--{name}
   const uiElements = [
     ...(gallery.allow_download !== false
       ? [
@@ -173,9 +182,10 @@ export default function GalleryClientView({
             onClick: async (e: any, el: any, pswpInstance: any) => {
               const currentPhoto = photos[pswpInstance.currIndex];
               const savedEmail =
-                typeof window !== "undefined"
+                user?.email ||
+                (typeof window !== "undefined"
                   ? localStorage.getItem("guest_email")
-                  : null;
+                  : null);
 
               if (!savedEmail) {
                 pswpInstance.close();
@@ -222,10 +232,11 @@ export default function GalleryClientView({
   // PhotoSwipe Lightbox Options
   const lightboxOptions = {
     bgOpacity: 1,
-    closeOnVerticalDrag: true, // Swipe down to dismiss
+    closeOnVerticalDrag: true,
     allowPanToNext: true,
     wheelToZoom: true,
     pinchToZoom: true,
+    initialZoomLevel: "fit",
     secondaryZoomLevel: 1.5,
     maxZoomLevel: 4,
   } as const;
