@@ -15,25 +15,39 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Custom PhotoSwipe Download Button Styling */
-/* Fix the Download Icon in Lightbox */
-.pswp__button--download {
-  background: none !important;
+/* 1. FORCE BUTTONS TO SHOW ON MOBILE */
+.pswp__top-bar {
   display: flex !important;
-  align-items: center;
-  justify-content: center;
-}
-
-/* Use a standard character or Lucide icon equivalent since SVGs in CSS can be tricky */
-.pswp__button--download::before {
-  content: "↓";
-  font-size: 24px;
-  color: white;
-  font-weight: bold;
-}
-
-/* Ensure the background is solid black (Designer Request) */
-.pswp__bg {
-  background: #000 !important;
+  justify-content: flex-end !important;
+  padding: 10px !important;
+  height: 60px !important;
   opacity: 1 !important;
+}
+
+/* Ensure custom buttons are visible and sized for fingers */
+.pswp__button--download,
+.pswp__button--favorite {
+  display: block !important;
+  width: 44px !important;
+  height: 44px !important;
+  position: relative !important;
+  background: none !important;
+}
+
+/* 2. ADD THE ICONS (SVGs) */
+.pswp__button--download::before {
+  content: "";
+  display: block;
+  width: 24px;
+  height: 24px;
+  margin: 10px;
+  background-color: white;
+  -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>');
+  mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>');
+}
+
+/* 3. FIX SWIPE DOWN (IOS Safari Fix) */
+.pswp {
+  --pswp-bg: #000;
+  touch-action: none !important; /* Forces the gesture to go to PhotoSwipe, not the browser */
 }

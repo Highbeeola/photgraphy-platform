@@ -8,7 +8,7 @@ import FavoriteButton from "./FavoriteButton";
 import CopyLinkButton from "./CopyLinkButton";
 import { Heart } from "lucide-react";
 import { toast } from "sonner";
-import { bulkFavorite } from "@/app/gallery/actions";
+import { bulkFavorite, toggleGuestFavorite } from "@/app/gallery/actions";
 
 interface Photo {
   id: string;
@@ -91,33 +91,60 @@ export default function GalleryClientView({
     await executeBulkFavorite(savedEmail);
   };
 
-  // PhotoSwipe UI Custom Elements
+  // PhotoSwipe Custom UI Elements
   const uiElements = [
     {
       name: "download-button",
       order: 10,
       isAbove: true,
-      html: '<button class="pswp__button pswp__button--download" title="Download"></button>',
+      tagName: "button",
+      html: "↓",
       onClick: (e: any, el: any, pswpInstance: any) => {
         handleDownload(pswpInstance.currSlide.data.src);
+      },
+    },
+    {
+      name: "favorite-button",
+      order: 9,
+      isAbove: true,
+      tagName: "button",
+      html: "❤",
+      onClick: async (e: any, el: any, pswpInstance: any) => {
+        const currentPhoto = photos[pswpInstance.currIndex];
+        const savedEmail =
+          typeof window !== "undefined"
+            ? localStorage.getItem("guest_email")
+            : null;
+
+        if (!savedEmail) {
+          pswpInstance.close();
+          setShowGuestModal(true);
+        } else {
+          try {
+            await toggleGuestFavorite(currentPhoto.id, gallery.id, savedEmail);
+            toast.success("Updated favorites");
+          } catch (err) {
+            toast.error("Failed to update favorite");
+          }
+        }
       },
     },
   ];
 
   // PhotoSwipe Lightbox Options
   const lightboxOptions = {
-    showHideAnimationType: "zoom",
     bgOpacity: 1,
-    loop: false, // Prevents endless cycle
     closeOnVerticalDrag: true, // Swipe down to dismiss
+    allowPanToNext: true,
     wheelToZoom: true,
-    escKey: true,
-    arrowKeys: true,
+    pinchToZoom: true,
+    secondaryZoomLevel: 1.5,
+    maxZoomLevel: 4,
   } as const;
 
   return (
     <div className="min-h-screen bg-white">
-      {/* COVER HERO (Optional display if available) */}
+      {/* COVER HERO */}
       {gallery.cover_url && (
         <div className="relative w-full h-[50vh] min-h-[350px] max-h-[550px] overflow-hidden bg-slate-100">
           <img
@@ -182,7 +209,10 @@ export default function GalleryClientView({
                     />
 
                     {/* Floating heart on grid */}
-                    <div className="absolute top-3 right-3 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity z-10">
+                    <div
+                      className="absolute top-3 right-3 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity z-10"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <FavoriteButton
                         photoId={photo.id}
                         galleryId={gallery.id}
