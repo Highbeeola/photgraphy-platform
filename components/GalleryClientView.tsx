@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Gallery, Item } from "react-photoswipe-gallery";
 import "photoswipe/dist/photoswipe.css";
 import SmartImage from "@/components/SmartImage";
@@ -44,6 +44,11 @@ export default function GalleryClientView({
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [guestEmail, setGuestEmail] = useState("");
 
+  // Track favorited photo ids so the lightbox heart can reflect state per-slide
+  const favoritedIdsRef = useRef(
+    new Set(initialFavorites.map((f) => f.photo_id)),
+  );
+
   // Download Function
   const handleDownload = async (url: string) => {
     try {
@@ -59,6 +64,32 @@ export default function GalleryClientView({
       window.URL.revokeObjectURL(blobUrl);
     } catch (err) {
       toast.error("Failed to download image");
+    }
+  };
+
+  // Share Function
+  const handleShare = async (photo: Photo) => {
+    const shareUrl =
+      typeof window !== "undefined"
+        ? `${window.location.origin}/gallery/${gallery.slug || gallery.id}?photo=${photo.id}`
+        : photo.url;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: gallery.title,
+          url: shareUrl,
+        });
+      } catch (err) {
+        // User cancelled the share sheet — not an error
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("Link copied to clipboard");
+      } catch (err) {
+        toast.error("Failed to copy link");
+      }
     }
   };
 
@@ -92,32 +123,53 @@ export default function GalleryClientView({
   };
 
   // PhotoSwipe Custom UI Elements
-  // NOTE: `name` here becomes the CSS class suffix, i.e. `.pswp__button--{name}`.
-  // Renamed to "download" / "favorite" to match globals.css. Also switched
-  // isAbove -> isButton (the property PhotoSwipe's registerElement expects).
+  // `name` becomes the CSS class suffix: .pswp__button--{name}
   const uiElements = [
     ...(gallery.allow_download !== false
       ? [
           {
             name: "download",
-            order: 10,
+            order: 8,
             isButton: true,
             tagName: "button",
-            html: "↓",
+            title: "Download",
             onClick: (e: any, el: any, pswpInstance: any) => {
               handleDownload(pswpInstance.currSlide.data.src);
             },
           },
         ]
       : []),
+    {
+      name: "theme",
+      order: 9,
+      isButton: true,
+      tagName: "button",
+      title: "Toggle theme",
+      onClick: (e: any, el: any, pswpInstance: any) => {
+        const root = pswpInstance.element as HTMLElement;
+        const isLight = root.getAttribute("data-theme") === "light";
+        root.setAttribute("data-theme", isLight ? "dark" : "light");
+      },
+    },
     ...(gallery.allow_favorites !== false
       ? [
           {
             name: "favorite",
-            order: 9,
+            order: 10,
             isButton: true,
             tagName: "button",
-            html: "❤",
+            title: "Favorite",
+            onInit: (el: HTMLElement, pswpInstance: any) => {
+              const sync = () => {
+                const photo = photos[pswpInstance.currIndex];
+                el.classList.toggle(
+                  "pswp__button--favorited",
+                  photo ? favoritedIdsRef.current.has(photo.id) : false,
+                );
+              };
+              pswpInstance.on("change", sync);
+              sync();
+            },
             onClick: async (e: any, el: any, pswpInstance: any) => {
               const currentPhoto = photos[pswpInstance.currIndex];
               const savedEmail =
@@ -128,22 +180,43 @@ export default function GalleryClientView({
               if (!savedEmail) {
                 pswpInstance.close();
                 setShowGuestModal(true);
-              } else {
-                try {
-                  await toggleGuestFavorite(
-                    currentPhoto.id,
-                    gallery.id,
-                    savedEmail,
-                  );
-                  toast.success("Updated favorites");
-                } catch (err) {
-                  toast.error("Failed to update favorite");
+                return;
+              }
+
+              try {
+                await toggleGuestFavorite(
+                  currentPhoto.id,
+                  gallery.id,
+                  savedEmail,
+                );
+                if (favoritedIdsRef.current.has(currentPhoto.id)) {
+                  favoritedIdsRef.current.delete(currentPhoto.id);
+                } else {
+                  favoritedIdsRef.current.add(currentPhoto.id);
                 }
+                el.classList.toggle(
+                  "pswp__button--favorited",
+                  favoritedIdsRef.current.has(currentPhoto.id),
+                );
+                toast.success("Updated favorites");
+              } catch (err) {
+                toast.error("Failed to update favorite");
               }
             },
           },
         ]
       : []),
+    {
+      name: "share",
+      order: 7,
+      isButton: true,
+      tagName: "button",
+      title: "Share",
+      onClick: (e: any, el: any, pswpInstance: any) => {
+        const currentPhoto = photos[pswpInstance.currIndex];
+        if (currentPhoto) handleShare(currentPhoto);
+      },
+    },
   ];
 
   // PhotoSwipe Lightbox Options

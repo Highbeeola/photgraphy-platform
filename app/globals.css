@@ -15,7 +15,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* 1. FORCE BUTTONS TO SHOW ON MOBILE */
+/* ===== PhotoSwipe toolbar ===== */
 .pswp__top-bar {
   display: flex !important;
   justify-content: flex-end !important;
@@ -24,9 +24,10 @@ body {
   opacity: 1 !important;
 }
 
-/* Ensure custom buttons are visible and sized for fingers */
 .pswp__button--download,
-.pswp__button--favorite {
+.pswp__button--theme,
+.pswp__button--favorite,
+.pswp__button--share {
   display: block !important;
   width: 44px !important;
   height: 44px !important;
@@ -34,23 +35,75 @@ body {
   background: none !important;
 }
 
-/* 2. ADD THE ICONS (SVGs) */
+/* Download icon */
 .pswp__button--download::before {
   content: "";
   display: block;
   width: 24px;
   height: 24px;
   margin: 10px;
-  background-color: white;
+  background-color: var(--pswp-icon-color, white);
   -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>');
   mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>');
 }
 
-/* 3. iOS Safari note: do NOT set touch-action: none on .pswp — PhotoSwipe
-   manages touch-action internally to detect vertical dismiss drags, and
-   an !important override on the container blocks that detection. If you
-   see pull-to-refresh or rubber-banding while the lightbox is open, fix
-   that on body/html scoped to when the lightbox is open, not here. */
+/* Theme (sun) icon */
+.pswp__button--theme::before {
+  content: "";
+  display: block;
+  width: 24px;
+  height: 24px;
+  margin: 10px;
+  background-color: var(--pswp-icon-color, white);
+  -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>');
+  mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>');
+}
+
+/* Favorite (heart) icon — outline by default, filled red when favorited */
+.pswp__button--favorite::before {
+  content: "";
+  display: block;
+  width: 24px;
+  height: 24px;
+  margin: 10px;
+  background-color: var(--pswp-icon-color, white);
+  -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>');
+  mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>');
+}
+
+.pswp__button--favorite.pswp__button--favorited::before {
+  background-color: #ef4444;
+  -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="black" stroke="none"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>');
+  mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="black" stroke="none"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>');
+}
+
+/* Share icon */
+.pswp__button--share::before {
+  content: "";
+  display: block;
+  width: 24px;
+  height: 24px;
+  margin: 10px;
+  background-color: var(--pswp-icon-color, white);
+  -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/></svg>');
+  mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/></svg>');
+}
+
+/* ===== Theme variants ===== */
 .pswp {
   --pswp-bg: #000;
+  --pswp-icon-color: white;
+}
+
+.pswp[data-theme="light"] {
+  --pswp-bg: #fff;
+  --pswp-icon-color: black;
+}
+
+/* ===== Gesture fix: stop WebKit from swallowing the dismiss swipe ===== */
+.pswp img {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
