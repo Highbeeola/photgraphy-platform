@@ -10,7 +10,6 @@ import { Heart } from "lucide-react";
 import { toast } from "sonner";
 import { bulkFavorite } from "@/app/gallery/actions";
 
-// Types
 interface Photo {
   id: string;
   url: string;
@@ -25,6 +24,7 @@ interface GalleryData {
   id: string;
   slug?: string;
   title: string;
+  cover_url?: string;
   event_date?: string;
   allow_favorites?: boolean;
   allow_download?: boolean;
@@ -44,7 +44,7 @@ export default function GalleryClientView({
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [guestEmail, setGuestEmail] = useState("");
 
-  // 1. Download Handler
+  // Download Function
   const handleDownload = async (url: string) => {
     try {
       const res = await fetch(url);
@@ -52,7 +52,7 @@ export default function GalleryClientView({
       const blobUrl = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = blobUrl;
-      a.download = `${gallery.title.replace(/\s+/g, "-")}.jpg`;
+      a.download = `${gallery.title.replace(/\s+/g, "-")}-photo.jpg`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -62,7 +62,7 @@ export default function GalleryClientView({
     }
   };
 
-  // 2. Favorite All Logic
+  // Bulk Favorite Action
   const executeBulkFavorite = async (email: string) => {
     toast.promise(
       bulkFavorite(
@@ -91,81 +91,98 @@ export default function GalleryClientView({
     await executeBulkFavorite(savedEmail);
   };
 
-  // 3. PhotoSwipe Lightbox Options
+  // PhotoSwipe UI Custom Elements
+  const uiElements = [
+    {
+      name: "download-button",
+      order: 10,
+      isAbove: true,
+      html: '<button class="pswp__button pswp__button--download" title="Download"></button>',
+      onClick: (e: any, el: any, pswpInstance: any) => {
+        handleDownload(pswpInstance.currSlide.data.src);
+      },
+    },
+  ];
+
+  // PhotoSwipe Lightbox Options
   const lightboxOptions = {
     showHideAnimationType: "zoom",
-    bgOpacity: 1, // 100% solid black
-    closeOnVerticalDrag: true,
-    mainClass: "pswp--custom-bg", // Ensures buttons stay visible
+    bgOpacity: 1,
+    loop: false, // Prevents endless cycle
+    closeOnVerticalDrag: true, // Swipe down to dismiss
+    wheelToZoom: true,
+    escKey: true,
+    arrowKeys: true,
   } as const;
 
   return (
     <div className="min-h-screen bg-white">
-      {/* HEADER SECTION */}
-      <div className="text-center py-20 space-y-8">
-        <div className="space-y-2">
-          <h1 className="text-5xl md:text-8xl font-serif italic tracking-tighter leading-tight">
-            {gallery.title}
-          </h1>
-          <p className="text-[10px] uppercase tracking-[0.6em] text-slate-400 font-bold">
-            Collection
-          </p>
+      {/* COVER HERO (Optional display if available) */}
+      {gallery.cover_url && (
+        <div className="relative w-full h-[50vh] min-h-[350px] max-h-[550px] overflow-hidden bg-slate-100">
+          <img
+            src={gallery.cover_url}
+            alt={gallery.title}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-black/20" />
         </div>
+      )}
 
-        {/* UPDATED ACTION BAR */}
-        <div className="flex justify-center items-center gap-12 pt-4">
-          {/* SHARE BUTTON */}
-          <div className="flex flex-col items-center gap-3 group cursor-pointer">
-            <CopyLinkButton galleryId={gallery.id} />
-            <span className="text-[10px] uppercase tracking-widest font-black text-slate-300 group-hover:text-black transition">
-              Share
-            </span>
-          </div>
+      {/* HEADER SECTION */}
+      <header className="py-16 px-6 text-center space-y-8">
+        <h1 className="text-5xl md:text-8xl font-serif italic tracking-tighter">
+          {gallery.title}
+        </h1>
 
-          {/* FAVORITE ALL BUTTON */}
+        <div className="flex justify-center items-center gap-12">
+          <CopyLinkButton galleryId={gallery.id} />
+
           {gallery.allow_favorites !== false && (
             <button
               onClick={handleFavoriteAll}
-              className="flex flex-col items-center gap-3 group active:scale-95 transition-transform"
+              className="flex flex-col items-center gap-2 group active:scale-95 transition-transform"
             >
-              <div className="p-3.5 rounded-full border border-slate-200 bg-white shadow-sm group-hover:border-red-200 group-hover:bg-red-50 transition-all">
+              <div className="p-3 rounded-full border border-slate-200 bg-white group-hover:border-red-200 transition-all shadow-sm">
                 <Heart
                   size={20}
                   className="text-slate-400 group-hover:text-red-500 transition-colors"
                 />
               </div>
-              <span className="text-[10px] uppercase tracking-widest font-black text-slate-300 group-hover:text-black transition">
+              <span className="text-[10px] uppercase tracking-widest font-black text-slate-400 group-hover:text-black">
                 Favorite All
               </span>
             </button>
           )}
         </div>
-      </div>
+      </header>
 
-      {/* PHOTO GRID WITH PHOTOSWIPE */}
-      <main className="max-w-[1600px] mx-auto px-4 pb-20">
-        <Gallery options={lightboxOptions}>
-          {/* columns-2 for mobile, columns-3/4 for desktop. 
-              gap-4 ensures photos have room but feel connected. */}
-          <div className="columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
-            {photos.map((photo: Photo) => (
+      {/* GALLERY GRID */}
+      <main className="max-w-[1600px] mx-auto px-4 pb-24">
+        <Gallery uiElements={uiElements as any} options={lightboxOptions}>
+          <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
+            {photos.map((photo, index) => (
               <Item
                 key={photo.id}
                 original={photo.url}
                 thumbnail={photo.url}
-                width="1600"
-                height="2400"
+                width={1600}
+                height={2400}
               >
                 {({ ref, open }) => (
                   <div
-                    ref={ref as unknown as React.RefObject<HTMLDivElement>}
+                    ref={ref as any}
                     onClick={open}
-                    className="break-inside-avoid mb-4 cursor-zoom-in group relative"
+                    className="mb-4 break-inside-avoid relative group cursor-zoom-in overflow-hidden rounded-sm"
                   >
-                    <SmartImage src={photo.url} alt={gallery.title} />
+                    <SmartImage
+                      src={photo.url}
+                      alt={gallery.title}
+                      priority={index < 4}
+                    />
 
-                    {/* Floating Heart on Grid */}
-                    <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                    {/* Floating heart on grid */}
+                    <div className="absolute top-3 right-3 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity z-10">
                       <FavoriteButton
                         photoId={photo.id}
                         galleryId={gallery.id}
@@ -182,10 +199,10 @@ export default function GalleryClientView({
         </Gallery>
       </main>
 
-      {/* GUEST MODAL FOR FAVORITE ALL */}
+      {/* GUEST EMAIL MODAL */}
       {showGuestModal && (
         <div className="fixed inset-0 z-[10000] bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-white p-6 rounded-xl max-w-sm w-full space-y-4">
+          <div className="bg-white p-6 rounded-xl max-w-sm w-full space-y-4 shadow-xl">
             <h3 className="text-lg font-serif italic">Save your favorites</h3>
             <p className="text-xs text-slate-500">
               Please enter your email to save all favorited photos.
@@ -211,13 +228,13 @@ export default function GalleryClientView({
                 <button
                   type="button"
                   onClick={() => setShowGuestModal(false)}
-                  className="px-3 py-1.5 text-xs text-slate-500"
+                  className="px-3 py-1.5 text-xs text-slate-500 hover:text-black"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 text-xs bg-black text-white rounded-lg"
+                  className="px-4 py-1.5 text-xs bg-black text-white rounded-lg hover:bg-slate-800 transition-colors"
                 >
                   Save & Favorite
                 </button>
