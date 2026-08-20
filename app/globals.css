@@ -26,3 +26,13 @@ body {
   background: rgba(0, 0, 0, 0.95) !important; /* Dara's dark luxury vibe */
   backdrop-filter: blur(10px);
 }
+.pswp__top-bar {
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.5),
+    transparent
+  ) !important;
+}
+.pswp__button {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
