@@ -464,6 +464,16 @@ export default function GalleryClientView({
       theme = localStorage.getItem(THEME_KEY) === "light" ? "light" : "dark";
     } catch {}
     pswp.element?.setAttribute("data-theme", theme);
+
+    // Pin the counter next to the close button
+    const counter = pswp.element?.querySelector(
+      ".pswp__counter",
+    ) as HTMLElement | null;
+    if (counter) {
+      counter.style.setProperty("margin-left", "auto", "important");
+      counter.style.setProperty("margin-right", "4px", "important");
+    }
+
     pswp.on("destroy", () => {
       lightboxRef.current = null;
     });
@@ -508,17 +518,11 @@ export default function GalleryClientView({
           {gallery.allow_favorites !== false && (
             <button
               onClick={handleFavoriteAll}
-              className="flex flex-col items-center gap-2 group active:scale-95 transition-transform"
+              aria-label="Favorite all photos"
+              title="Favorite all"
+              className="p-3 rounded-full text-black hover:text-red-500 active:scale-95 transition"
             >
-              <div className="p-3 rounded-full border border-slate-200 bg-white group-hover:border-red-200 transition-all shadow-sm">
-                <Heart
-                  size={20}
-                  className="text-slate-400 group-hover:text-red-500 transition-colors"
-                />
-              </div>
-              <span className="text-[10px] uppercase tracking-widest font-black text-slate-400 group-hover:text-black">
-                Favorite All
-              </span>
+              <Heart size={20} />
             </button>
           )}
         </div>
