@@ -2,10 +2,6 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 html {
   scroll-behavior: smooth;
 }
@@ -15,95 +11,117 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ===== PhotoSwipe toolbar ===== */
-.pswp__top-bar {
-  display: flex !important;
-  justify-content: flex-end !important;
-  padding: 10px !important;
-  height: 60px !important;
-  opacity: 1 !important;
-}
+/* =========================================================
+   PHOTOSWIPE LIGHTBOX
 
-.pswp__button--download,
-.pswp__button--theme,
-.pswp__button--favorite,
-.pswp__button--share {
-  display: block !important;
-  width: 44px !important;
-  height: 44px !important;
-  position: relative !important;
-  background: none !important;
-}
+   Why `.pswp .something` instead of `!important`:
+   photoswipe.css is imported AFTER this file, so a plain
+   `.pswp__top-bar` rule here loses. Prefixing with `.pswp`
+   raises specificity so these rules win without !important.
 
-/* Download icon */
-.pswp__button--download::before {
-  content: "";
-  display: block;
-  width: 24px;
-  height: 24px;
-  margin: 10px;
-  background-color: var(--pswp-icon-color, white);
-  -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>');
-  mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>');
-}
+   Toolbar: [share][download][theme][favorite] ---- [counter][close]
+   Left group order is set in JS (orders 1-4, counter is 5).
+   ========================================================= */
 
-/* Theme (sun) icon */
-.pswp__button--theme::before {
-  content: "";
-  display: block;
-  width: 24px;
-  height: 24px;
-  margin: 10px;
-  background-color: var(--pswp-icon-color, white);
-  -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>');
-  mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>');
-}
-
-/* Favorite (heart) icon — outline by default, filled red when favorited */
-.pswp__button--favorite::before {
-  content: "";
-  display: block;
-  width: 24px;
-  height: 24px;
-  margin: 10px;
-  background-color: var(--pswp-icon-color, white);
-  -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>');
-  mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>');
-}
-
-.pswp__button--favorite.pswp__button--favorited::before {
-  background-color: #ef4444;
-  -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="black" stroke="none"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>');
-  mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="black" stroke="none"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/></svg>');
-}
-
-/* Share icon */
-.pswp__button--share::before {
-  content: "";
-  display: block;
-  width: 24px;
-  height: 24px;
-  margin: 10px;
-  background-color: var(--pswp-icon-color, white);
-  -webkit-mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/></svg>');
-  mask-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="10.5" x2="15.4" y2="6.5"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/></svg>');
-}
-
-/* ===== Theme variants ===== */
-.pswp {
-  --pswp-bg: #000;
-  --pswp-icon-color: white;
-}
-
+/* ---- Theme (dark default, light via data-theme on .pswp) ----
+   PhotoSwipe colours everything from these variables. */
 .pswp[data-theme="light"] {
-  --pswp-bg: #fff;
-  --pswp-icon-color: black;
+  --pswp-bg: #ffffff;
+  --pswp-placeholder-bg: #eeeeee;
+  --pswp-icon-color: #111111;
+  --pswp-icon-color-secondary: #ffffff;
+  --pswp-icon-stroke-color: #ffffff;
 }
 
-/* ===== Gesture fix: stop WebKit from swallowing the dismiss swipe ===== */
-.pswp img {
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-user-drag: none;
+.pswp {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ---- Top bar: transparent gradient so the photo can go full-bleed ---- */
+.pswp .pswp__top-bar {
+  box-sizing: border-box;
+  height: calc(60px + env(safe-area-inset-top, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-left: max(8px, env(safe-area-inset-left, 0px));
+  padding-right: max(8px, env(safe-area-inset-right, 0px));
+  align-items: center;
+  gap: 2px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0));
+}
+
+.pswp[data-theme="light"] .pswp__top-bar {
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.9),
+    rgba(255, 255, 255, 0)
+  );
+}
+
+/* ---- Our four custom buttons (44px = comfortable touch target) ---- */
+.pswp .pswp__button--share,
+.pswp .pswp__button--download,
+.pswp .pswp__button--theme,
+.pswp .pswp__button--favorite {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  opacity: 1;
+  color: var(--pswp-icon-color);
+}
+
+.pswp .pswp-tb-icon {
+  display: block;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+  transition:
+    transform 0.15s ease,
+    fill 0.15s ease,
+    stroke 0.15s ease;
+}
+
+.pswp[data-theme="light"] .pswp-tb-icon {
+  filter: none;
+}
+
+.pswp .pswp__button--share:active .pswp-tb-icon,
+.pswp .pswp__button--download:active .pswp-tb-icon,
+.pswp .pswp__button--theme:active .pswp-tb-icon,
+.pswp .pswp__button--favorite:active .pswp-tb-icon {
+  transform: scale(0.85);
+}
+
+/* Favorited heart */
+.pswp .pswp__button--favorited .pswp-tb-icon {
+  fill: #ef4444;
+  stroke: #ef4444;
+}
+
+/* ---- Counter: pushed to the right, next to close ---- */
+.pswp .pswp__counter {
+  margin: 0 4px 0 auto;
+  height: auto;
+  line-height: 1;
+  white-space: nowrap;
+  opacity: 1;
+}
+
+/* ---- Unused default buttons ---- */
+.pswp .pswp__button--zoom,
+.pswp .pswp__button--fs {
+  display: none;
+}
+
+/* ---- Stop the page behind from scrolling / pull-to-refresh while open ----
+   This is what makes swipe-down-to-dismiss feel clean on phones. */
+html:has(.pswp--open),
+body:has(.pswp--open) {
+  overscroll-behavior: none;
+}
+
+@media (pointer: coarse) {
+  body:has(.pswp--open) {
+    overflow: hidden;
+  }
 }

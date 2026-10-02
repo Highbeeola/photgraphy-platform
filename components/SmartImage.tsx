@@ -1,23 +1,28 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface SmartImageProps {
   src: string;
   alt?: string;
   width?: number;
+  height?: number;
   priority?: boolean;
+  onDimensions?: (width: number, height: number) => void;
 }
 
 export default function SmartImage({
   src,
   alt,
   width,
+  height,
   priority,
+  onDimensions,
 }: SmartImageProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
+  const imgRef = useRef<HTMLImageElement>(null);
 
   const cloudinaryLoader = ({
     src: loaderSrc,
@@ -34,6 +39,21 @@ export default function SmartImage({
     return loaderSrc;
   };
 
+  const handleLoaded = (img: HTMLImageElement) => {
+    setIsLoaded(true);
+    if (onDimensions && img.naturalWidth && img.naturalHeight) {
+      onDimensions(img.naturalWidth, img.naturalHeight);
+    }
+  };
+
+  // If the image was already cached, `onLoad` can fire before React hydrates,
+  // which would leave it stuck at opacity-0. Catch that case here.
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img?.complete && img.naturalWidth) handleLoaded(img);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="relative w-full bg-slate-100 overflow-hidden rounded-sm">
       {hasError ? (
@@ -42,18 +62,21 @@ export default function SmartImage({
         </div>
       ) : (
         <Image
+          ref={imgRef}
           loader={cloudinaryLoader}
           src={src}
           alt={alt || "Photo"}
+          // Real aspect ratio when known, so tiles don't jump when they load
           width={width || 1200}
-          height={1600}
-          unoptimized
+          height={height || 1600}
+          // NOTE: `unoptimized` removed. When it is set, Next ignores the loader
+          // above, so every tile downloaded the full-resolution original.
           priority={priority}
-          sizes="(max-width: 768px) 50vw, 33vw"
+          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
           className={`w-full h-auto object-contain transition-opacity duration-700 ${
             isLoaded ? "opacity-100" : "opacity-0"
           }`}
-          onLoad={() => setIsLoaded(true)}
+          onLoad={(e) => handleLoaded(e.currentTarget)}
           onError={() => setHasError(true)}
         />
       )}

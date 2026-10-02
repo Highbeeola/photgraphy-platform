@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
@@ -16,6 +16,14 @@ const sans = Inter({
   variable: "--font-sans",
 });
 
+// 2. Viewport Config
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
+
+// 3. Metadata Config
 export const metadata: Metadata = {
   title: {
     default: "Dara Pixel | Fine Art Photography",
@@ -24,19 +32,18 @@ export const metadata: Metadata = {
   description:
     "Capturing the raw, unscripted beauty of human connection in Lagos and worldwide.",
   appleWebApp: {
-    title: "Dara Pixel", // This fixes the 'jampacked' text on iPhones
+    title: "Dara Pixel",
     statusBarStyle: "black-translucent",
     capable: true,
   },
   icons: {
     icon: [
-      { url: "/favicon.ico" }, // Standard
+      { url: "/favicon.ico" },
       { url: "/favicon.ico", media: "(prefers-color-scheme: light)" },
       { url: "/favicon.ico", media: "(prefers-color-scheme: dark)" },
     ],
     shortcut: "/favicon.ico",
     apple: "/apple-touch-icon.png",
-    // This tells Android where to find the high-res icons
     other: [
       {
         rel: "icon",
@@ -60,7 +67,6 @@ export const metadata: Metadata = {
   },
 };
 
-// 2. Fix the 'any' error by defining the type here
 export default function RootLayout({
   children,
 }: {
