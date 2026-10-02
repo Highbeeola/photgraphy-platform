@@ -49,7 +49,7 @@ interface GalleryClientViewProps {
 }
 
 /* ------------------------------------------------------------------ */
-/* Constants + helpers                                                 */
+/* Constants + helpers                                                */
 /* ------------------------------------------------------------------ */
 
 const DEFAULT_WIDTH = 1200;
@@ -446,6 +446,13 @@ export default function GalleryClientView({
             },
           ]
         : []),
+      {
+        name: "spacer",
+        order: 4.5, // between favorite (4) and the counter (5)
+        onInit: (el: HTMLElement) => {
+          el.style.flex = "1 1 auto";
+        },
+      },
     ],
     [gallery.allow_download, gallery.allow_favorites],
   );
@@ -465,6 +472,7 @@ export default function GalleryClientView({
   // Zoom levels are multiples of "fit" so they feel the same on every phone and
   // every photo, regardless of image pixel size.
   const lightboxOptions: PhotoSwipeOptions = {
+    zoom: false,
     bgOpacity: 1,
     closeOnVerticalDrag: true, // swipe down to dismiss
     allowPanToNext: true,

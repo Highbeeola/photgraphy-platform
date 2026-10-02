@@ -100,7 +100,7 @@ body {
 
 /* ---- Counter: pushed to the right, next to close ---- */
 .pswp .pswp__counter {
-  margin: 0 4px 0 auto;
+  margin: 0 4px 0 ;
   height: auto;
   line-height: 1;
   white-space: nowrap;
