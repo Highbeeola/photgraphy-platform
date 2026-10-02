@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { Gallery, Item } from "react-photoswipe-gallery";
 import type { PhotoSwipeOptions } from "photoswipe";
-import "photoswipe/dist/photoswipe.css";
 import SmartImage from "@/components/SmartImage";
 import FavoriteButton from "./FavoriteButton";
 import CopyLinkButton from "./CopyLinkButton";
@@ -15,8 +14,6 @@ interface Photo {
   id: string;
   url: string;
   storage_path: string;
-  // Optional: if you ever store real dimensions in the DB, pass them here
-  // and the lightbox will be exact from the very first frame.
   width?: number;
   height?: number;
 }
@@ -54,9 +51,6 @@ interface GalleryClientViewProps {
 
 const DEFAULT_WIDTH = 1200;
 const DEFAULT_HEIGHT = 1600;
-// PhotoSwipe only needs the correct ASPECT RATIO, so every measured size is
-// normalised to this width. Zoom levels below are relative to "fit", so the
-// absolute number doesn't matter.
 const NORMAL_WIDTH = 2000;
 const THEME_KEY = "gallery_lightbox_theme";
 
@@ -71,10 +65,9 @@ const isCloudinary = (url: string) =>
 const withTransform = (url: string, t: string) =>
   isCloudinary(url) ? url.replace("/upload/", `/upload/${t}/`) : url;
 
-// Small image: used for the lightbox open animation placeholder + size probing
 const thumbUrl = (url: string) =>
   withTransform(url, "w_400,c_limit,q_auto,f_auto");
-// Capped image: what the lightbox actually displays (much lighter than the raw original)
+
 const fullUrl = (url: string) =>
   withTransform(url, "w_2400,c_limit,q_auto,f_auto");
 
@@ -121,7 +114,6 @@ export default function GalleryClientView({
 }: GalleryClientViewProps) {
   const [showGuestModal, setShowGuestModal] = useState(false);
   const [guestEmail, setGuestEmail] = useState("");
-  // What the guest was trying to do when we asked for their email
   const pendingRef = useRef<string | "ALL" | null>(null);
 
   /* ---------------- Photo dimensions (batched) ---------------- */
@@ -139,7 +131,6 @@ export default function GalleryClientView({
         return;
       dimsBufferRef.current[photoId] = normalizeDims(width, height);
       if (flushTimerRef.current) return;
-      // Batch updates so 100+ images loading doesn't re-render the grid 100+ times
       flushTimerRef.current = setTimeout(() => {
         flushTimerRef.current = null;
         const batch = dimsBufferRef.current;
@@ -158,9 +149,6 @@ export default function GalleryClientView({
     [],
   );
 
-  // Probe sizes of photos that haven't rendered yet (below the fold) so the
-  // lightbox opens with the right aspect ratio on EVERY slide, not just the
-  // ones already loaded. Uses tiny Cloudinary thumbnails, 4 at a time.
   useEffect(() => {
     const missing = photos.filter(
       (p) => !(p.width && p.height) && isCloudinary(p.url),
@@ -196,7 +184,7 @@ export default function GalleryClientView({
       ? normalizeDims(p.width, p.height)
       : photoDimensions[p.id];
 
-  /* ---------------- Favorites: ONE source of truth ---------------- */
+  /* ---------------- Favorites ---------------- */
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(
     () => new Set(initialFavorites.map((f) => f.photo_id)),
   );
@@ -208,7 +196,6 @@ export default function GalleryClientView({
     setFavoriteIds(next);
   };
 
-  // Keep the lightbox heart in sync when favorites change while it's open
   useEffect(() => {
     const pswp = lightboxRef.current;
     if (!pswp?.element) return;
@@ -235,13 +222,13 @@ export default function GalleryClientView({
     const next = new Set(favoritedIdsRef.current);
     if (wasFav) next.delete(photoId);
     else next.add(photoId);
-    commitFavorites(next); // optimistic
+    commitFavorites(next);
 
     try {
       await toggleGuestFavorite(photoId, gallery.id, email);
       return "ok";
     } catch {
-      const rollback = new Set(favoritedIdsRef.current); // undo
+      const rollback = new Set(favoritedIdsRef.current);
       if (wasFav) rollback.add(photoId);
       else rollback.delete(photoId);
       commitFavorites(rollback);
@@ -255,8 +242,6 @@ export default function GalleryClientView({
     const index = photos.findIndex((p) => p.id === photo.id);
     const filename = `${gallery.title.replace(/\s+/g, "-")}-photo-${index + 1}.jpg`;
     try {
-      // Cloudinary: let the server force a download of the TRUE original
-      // (no CORS issues, works on iOS Safari)
       if (isCloudinary(photo.url)) {
         const a = document.createElement("a");
         a.href = photo.url.replace("/upload/", "/upload/fl_attachment/");
@@ -319,7 +304,7 @@ export default function GalleryClientView({
       await request;
       commitFavorites(new Set(photos.map((p) => p.id)));
     } catch {
-      // toast.promise already showed the error
+      // toast.promise handled error display
     }
   };
 
@@ -350,9 +335,6 @@ export default function GalleryClientView({
   };
 
   /* ---------------- PhotoSwipe UI ---------------- */
-  // PhotoSwipe registers its UI elements once, so handlers must never close
-  // over React state. They call through this ref, which always points at the
-  // latest functions.
   const actionsRef = useRef<Actions | null>(null);
   useEffect(() => {
     actionsRef.current = {
@@ -363,8 +345,6 @@ export default function GalleryClientView({
     };
   });
 
-  // Toolbar: [share][download][theme][favorite] ---------- [counter][close]
-  // (orders 1-4 sit before PhotoSwipe's counter which is order 5)
   const uiElements = useMemo(
     () => [
       {
@@ -440,7 +420,6 @@ export default function GalleryClientView({
                 const p = actionsRef.current?.photos[pswp.currIndex];
                 if (!p || !actionsRef.current) return;
                 const result = await actionsRef.current.toggleFavorite(p.id);
-                // No email yet: close the lightbox so the email modal is visible
                 if (result === "needs-email") pswp.close();
               },
             },
@@ -448,9 +427,25 @@ export default function GalleryClientView({
         : []),
       {
         name: "spacer",
-        order: 4.5, // between favorite (4) and the counter (5)
+        order: 4.5,
         onInit: (el: HTMLElement) => {
           el.style.flex = "1 1 auto";
+        },
+      },
+      {
+        name: "index",
+        order: 5,
+        onInit: (el: HTMLElement, pswp: any) => {
+          el.style.cssText =
+            "position:absolute;top:env(safe-area-inset-top,0px);height:60px;" +
+            "right:calc(max(8px,env(safe-area-inset-right,0px)) + 60px);" +
+            "display:flex;align-items:center;margin:0;font-size:14px;line-height:1;" +
+            "white-space:nowrap;color:var(--pswp-icon-color);pointer-events:none;";
+          const update = () => {
+            el.textContent = `${pswp.currIndex + 1} / ${pswp.getNumItems()}`;
+          };
+          pswp.on("change", update);
+          update();
         },
       },
     ],
@@ -465,29 +460,18 @@ export default function GalleryClientView({
     } catch {}
     pswp.element?.setAttribute("data-theme", theme);
 
-    // Pin the counter next to the close button
-    const counter = pswp.element?.querySelector(
-      ".pswp__counter",
-    ) as HTMLElement | null;
-    if (counter) {
-      counter.style.setProperty("margin-left", "auto", "important");
-      counter.style.setProperty("margin-right", "4px", "important");
-    }
-
     pswp.on("destroy", () => {
       lightboxRef.current = null;
     });
   };
 
-  // Zoom levels are multiples of "fit" so they feel the same on every phone and
-  // every photo, regardless of image pixel size.
   const lightboxOptions: PhotoSwipeOptions = {
     zoom: false,
+    counter: false,
     bgOpacity: 1,
-    closeOnVerticalDrag: true, // swipe down to dismiss
+    closeOnVerticalDrag: true,
     allowPanToNext: true,
     wheelToZoom: true,
-    // double-tap toggles between fit and this level
     secondaryZoomLevel: (z) => z.fit * 2.5,
     maxZoomLevel: (z) => z.fit * 6,
     padding: { top: 0, bottom: 0, left: 0, right: 0 },
